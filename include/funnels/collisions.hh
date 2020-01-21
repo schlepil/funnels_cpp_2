@@ -39,7 +39,9 @@ namespace collision {
       l_a->share_traj(sys);
       coll->share_traj(sys);
       g_b->share_traj(sys);
-      // coll is committed to reduce transitions
+      // coll is committed and has no outgoing
+      // transitions to avoid generation unnecessary states
+      coll->_is_colliding=true;
       coll->loc().set_loc_typ(COMMITTED);
       coll->loc().add_label(col_lbl);
       

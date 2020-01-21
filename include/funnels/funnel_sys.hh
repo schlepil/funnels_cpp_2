@@ -142,6 +142,10 @@ namespace funnels{
                                   this_fun_family[0].end());
           for ( size_t lvl=0; lvl<this_fun_family.size()-1; lvl++){
             for (auto &a_parent : this_fun_family[lvl]){
+              if(a_parent->_is_colliding){
+                // "Fake" tunnel
+                continue;
+              }
               for ( size_t lvl_c=lvl+1; lvl_c<this_fun_family.size(); lvl_c++) {
                 for (auto &a_child : this_fun_family[lvl_c]) {
                   n_trans += compute_converging_trans(*a_parent,
@@ -162,6 +166,10 @@ namespace funnels{
         std::cout << "funnel " << src_fun->loc().name()  << " (" << i << "/" <<
                   _all_funnels.size() << ")";
         n_trans_delta = 0;
+        if (src_fun->_is_colliding){
+          // "Fake" colliding tunnel
+          continue;
+        }
         for (auto tgt_fun : _all_funnels){
           if (!do_lcl_switch && src_fun->in_family(tgt_fun)){
             // Do not compute transitions between funnels along
@@ -177,7 +185,7 @@ namespace funnels{
                   {std::pair(src_fun->loc().id(), tgt_fun->loc().id()),
                    std::make_shared<trans_abs::switching_trans_abstract_t>()}).first->second;
           
-          n_trans_delta_d = compute_switching_trans(*src_fun, *tgt_fun,
+          n_trans_delta_d = compute_inclusion_trans(*src_fun, *tgt_fun,
                                                     t_step, _ctrl_clk, _lcl_clk);
           n_trans_delta += n_trans_delta_d;
           if (n_trans_delta_d>0) {

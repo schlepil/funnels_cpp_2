@@ -6,6 +6,8 @@ set(UTIL_FILES
 set(TRANSITION_FILES
         "${CMAKE_CURRENT_SOURCE_DIR}/transitions.cc"
         "${FUNNEL_INC_DIR}/funnels/transitions.hh"
+        "${CMAKE_CURRENT_SOURCE_DIR}/transition_abstraction.cc"
+        "${FUNNEL_INC_DIR}/funnels/transition_abstraction.hh"
         PARENT_SCOPE)
 
 set(FUNNEL_FILES
@@ -24,6 +26,8 @@ set(TA_FILES
         "${FUNNEL_INC_DIR}/aut/ta.hh"
         "${CMAKE_CURRENT_SOURCE_DIR}/aut_survival.cc"
         "${FUNNEL_INC_DIR}/aut/aut_survival.hh"
+        "${CMAKE_CURRENT_SOURCE_DIR}/aut_catch_flag.cc"
+        "${FUNNEL_INC_DIR}/aut/aut_catch_flag.hh"
         PARENT_SCOPE)
 
 set(HELPER_FILES

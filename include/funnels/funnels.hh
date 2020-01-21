@@ -225,6 +225,9 @@ namespace funnels {
     // Edge abstraction map
     // Abstractions can be adjusted for each funnel pair
     std::shared_ptr<trans_abs::trans_abstract_t> _trans_abs;
+    
+    // Whether this funnel is a "fake" funnel to handle collisions
+    bool _is_colliding=false;
   
   protected:
     

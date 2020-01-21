@@ -34,7 +34,7 @@ size_t compute_converging_trans(FUNNEL &src, const FUNNEL& tgt,
 ///////////////
 
 template <class FUNNEL>
-size_t compute_switching_trans_fixed_ellip(
+size_t compute_inclusion_trans_fixed_ellip(
     FUNNEL &src, const FUNNEL &tgt, double t_step,
     switching_trans_info_t & info) {
   
@@ -49,7 +49,7 @@ size_t compute_switching_trans_fixed_ellip(
 }
 
 template<class FUNNEL>
-size_t compute_switching_trans(FUNNEL &src, const FUNNEL& tgt,
+size_t compute_inclusion_trans(FUNNEL &src, const FUNNEL& tgt,
      double t_step, switching_trans_info_t &info){
   
   using cvx_hull_t = typename FUNNEL::cvx_hull_t;
@@ -61,29 +61,26 @@ size_t compute_switching_trans(FUNNEL &src, const FUNNEL& tgt,
     // Check if the inner bounding box of the src intersect with the
     // outer bounding box of the target
     if (src.cvx_hull().intersect_in_out(tgt.cvx_hull())) {
-//      std::cout << "Inner and outer intersected" << std::endl;
-      return compute_switching_trans_fixed_ellip(src, tgt, t_step, info);
-    } else{
-//      std::cout << "Inner and outer did not intersect" << std::endl;
-      return 0;
+      return compute_inclusion_trans_fixed_ellip(src, tgt, t_step, info);
     }
   }else{
     throw std::runtime_error("Converging not implemented");
   }
+  return 0; // CVX_HULLS did not meet criterion
 }
 
 template<class FUNNEL>
-size_t compute_switching_trans(FUNNEL &src, const FUNNEL& tgt,
+size_t compute_inclusion_trans(FUNNEL &src, const FUNNEL& tgt,
     double t_step, const clock_ta_t &ctrl_clk, const clock_ta_t &lcl_clk){
   
   switching_trans_info_t info(src.loc(), tgt.loc(),
       ctrl_clk, lcl_clk, utils_ext::event_map["no_action"]);
   
-  return compute_switching_trans(src, tgt, t_step, info);
+  return compute_inclusion_trans(src, tgt, t_step, info);
 }
 
 template<class FUNNEL>
-size_t compute_switching_trans(FUNNEL &src, const FUNNEL& tgt,
+size_t compute_inclusion_trans(FUNNEL &src, const FUNNEL& tgt,
     double t_step, const clock_ta_t &ctrl_clk, const clock_ta_t &lcl_clk,
     const location_t &src_loc, const location_t &tgt_loc,
     const event_t &evt){
@@ -91,7 +88,7 @@ size_t compute_switching_trans(FUNNEL &src, const FUNNEL& tgt,
   switching_trans_info_t info(src_loc, tgt_loc,
       ctrl_clk, lcl_clk, evt);
   
-  return compute_switching_trans(src, tgt, t_step, info);
+  return compute_inclusion_trans(src, tgt, t_step, info);
 }
 
 /////////////////////////////////////////////////////
@@ -120,10 +117,13 @@ size_t compute_intersecting_trans(FUNNEL &src, const FUNNEL& tgt,
   using traj_t = typename lyap_t ::traj_t;
   
   if (std::is_same<lyap_t, lyapunov::fixed_ellipsoidal_lyap_t<traj_t, dist_t>>::value){
-    return compute_intersecting_trans_fixed_ellip(src, tgt, t_step, info);
+    if (src.cvx_hull().intersect_out_out(tgt.cvx_hull())) {
+      return compute_intersecting_trans_fixed_ellip(src, tgt, t_step, info);
+    }
   }else{
     throw std::runtime_error("Converging not implemented");
   }
+  return 0; // CVX_HULLS did not intersect
 }
 
 
@@ -229,14 +229,13 @@ std::pair<bool, std::pair<double, double>> compute_outer_col_times(
   if (std::is_same<lyap_t, lyapunov::fixed_ellipsoidal_lyap_t<traj_t, dist_t>>::value){
     // If bounding outer bounding boxes do not intersect ->
     // No collision possible
-    if (sys.cvx_hull().intersect_out_out(obs.cvx_hull())){
+    if (sys.cvx_hull().intersect_out_out(obs.cvx_hull())) {
       return compute_outer_col_times_fixed_ellip(sys, obs);
-    }else{
-      return {false, {0.,0.}};
     }
   }else{
     throw std::runtime_error("Converging not implemented");
   }
+  return {false, {0.,0.}}; // CVX_HULLS did not meet criterion
 }
 
 

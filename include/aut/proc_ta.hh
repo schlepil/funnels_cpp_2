@@ -41,6 +41,16 @@ namespace ta{
       return "";
     };
   };
+  
+  template <class T, class U>
+  static void register_self(T &reg, U *u){
+    reg._fun_proc.push_back( std::bind(&U::declare_proc, u) );
+    reg._fun_clk.push_back( std::bind(&U::declare_clk, u) );
+    reg._fun_event.push_back( std::bind(&U::declare_event, u) );
+    reg._fun_sync.push_back( std::bind(&U::declare_sync, u) );
+    reg._fun_loc.push_back( std::bind(&U::declare_loc, u) );
+    reg._fun_edge.push_back( std::bind(&U::declare_edge, u) );
+  }
 }
 
 #endif //FUNNELS_CPP_PROC_TA_HH

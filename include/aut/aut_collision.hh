@@ -18,7 +18,7 @@ namespace aut_col{
     using fun_t = typename OBS_FUNNEL::fun_t;
     using fun_ptr_t = typename OBS_FUNNEL::fun_ptr_t;
     using clock_ta_t = funnels::clock_ta_t;
-
+  // TODO : check if really needed/desired that collision has its own process
   public:
     aut_col(const fun_ptr_t obs_funnel, const clock_ta_t &obs_clk):
         _obs_funnel(obs_funnel),
@@ -109,12 +109,13 @@ namespace aut_col{
   
     template <class T>
     void register_self(T & reg){
-      reg._fun_proc.push_back( std::bind(&aut_col::declare_proc, this) );
-      reg._fun_clk.push_back( std::bind(&aut_col::declare_clk, this) );
-      reg._fun_event.push_back( std::bind(&aut_col::declare_event, this) );
-      reg._fun_sync.push_back( std::bind(&aut_col::declare_sync, this) );
-      reg._fun_loc.push_back( std::bind(&aut_col::declare_loc, this) );
-      reg._fun_edge.push_back( std::bind(&aut_col::declare_edge, this) );
+      return ta::register_self(reg, this);
+//      reg._fun_proc.push_back( std::bind(&aut_col::declare_proc, this) );
+//      reg._fun_clk.push_back( std::bind(&aut_col::declare_clk, this) );
+//      reg._fun_event.push_back( std::bind(&aut_col::declare_event, this) );
+//      reg._fun_sync.push_back( std::bind(&aut_col::declare_sync, this) );
+//      reg._fun_loc.push_back( std::bind(&aut_col::declare_loc, this) );
+//      reg._fun_edge.push_back( std::bind(&aut_col::declare_edge, this) );
     }
 
 

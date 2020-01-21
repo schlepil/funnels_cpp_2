@@ -40,12 +40,13 @@ namespace aut_surv{
   
     template <class T>
     void register_self(T & reg){
-      reg._fun_proc.push_back( std::bind(&aut_surv::declare_proc, this) );
-      reg._fun_clk.push_back( std::bind(&aut_surv::declare_clk, this) );
-      reg._fun_event.push_back( std::bind(&aut_surv::declare_event, this) );
-      reg._fun_sync.push_back( std::bind(&aut_surv::declare_sync, this) );
-      reg._fun_loc.push_back( std::bind(&aut_surv::declare_loc, this) );
-      reg._fun_edge.push_back( std::bind(&aut_surv::declare_edge, this) );
+      return ta::register_self(reg, this);
+//      reg._fun_proc.push_back( std::bind(&aut_surv::declare_proc, this) );
+//      reg._fun_clk.push_back( std::bind(&aut_surv::declare_clk, this) );
+//      reg._fun_event.push_back( std::bind(&aut_surv::declare_event, this) );
+//      reg._fun_sync.push_back( std::bind(&aut_surv::declare_sync, this) );
+//      reg._fun_loc.push_back( std::bind(&aut_surv::declare_loc, this) );
+//      reg._fun_edge.push_back( std::bind(&aut_surv::declare_edge, this) );
     }
     
   protected:
