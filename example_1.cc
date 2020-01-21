@@ -57,6 +57,14 @@ p_mat_t get_P_obs(){
   P_obs(2,2) = 1.e-10; P_obs(3,3) = 1.e-10;
   return P_obs;
 }
+// Funnel shape for targets
+p_mat_t get_P_targ(){
+  // Cylinder with radius 0.25
+  p_mat_t P_targ = p_mat_t::Zero();
+  P_targ(0, 0) = 4.; P_targ(1, 1) = 4.;
+  P_targ(2, 2) = 1.e-16; P_targ(3, 3) = 1.e-16;
+  return P_targ;
+}
 
 fun_ptr_t get_obstacle_box_fun(){
   // Creates an obstacle that moves along a square box of side length 0.5
@@ -112,6 +120,39 @@ fun_ptr_t get_obstacle_box_fun(){
   
   return my_obs_fun;
 }
+
+fun_ptr_t get_target_fun(){
+  // Creates two cylinders in the upper right corner and the lower left corner
+  
+  const double c_center = 0.8;
+  const size_t n_targ=5;
+  
+  const process_t &my_proc_targ = utils_ext::process_map.create_and_get
+      ("dummy_targ");
+  // Create the funnel
+  fun_ptr_t my_targ_fun = make_shared<fun_t>(2*n_targ, "targ_fun", my_proc_targ,
+                                            get_P_targ(), 0.0, my_dist);
+  //Fill it
+  vector_t_ptr_t t_ptr = std::make_shared<vector_t_t>(2*5);
+  vector_u_ptr_t u_ptr = std::make_shared<vector_u_t>(my_targ_fun->dimu);
+  matrix_ptr_t x_ptr = std::make_shared<matrix_t>(my_targ_fun->dimx, 4 * n_verif);
+  
+  // set time
+  t_ptr->setLinSpaced(0., 10.); // Dummy, not used in this ex
+  // dummy for control
+  u_ptr->fill(0);
+  // right upper
+  x_ptr->block(0, 0, 2, n_targ).fill(c_center);
+  //left lower
+  x_ptr->block(0, n_targ, 2, 2*n_targ).fill(c_center);
+  
+  // Set in funnel
+  my_targ_fun->set_traj(t_ptr, u_ptr, x_ptr);
+  
+  return my_targ_fun;
+}
+
+
 
 fun_ptr_t get_init_fun(){
   

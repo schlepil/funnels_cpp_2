@@ -168,7 +168,7 @@ namespace aut_catch_flag{
     std::string declare_loc()const{
       std::string tmp_string = "";
       if (_create_aut){
-        for (const location_t *a_loc : _all_sync){
+        for (const location_t *a_loc : _all_loc){
           tmp_string += a_loc->declare() + "\n";
         }
       }

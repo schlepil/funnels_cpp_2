@@ -28,6 +28,8 @@ set(TA_FILES
         "${FUNNEL_INC_DIR}/aut/aut_survival.hh"
         "${CMAKE_CURRENT_SOURCE_DIR}/aut_catch_flag.cc"
         "${FUNNEL_INC_DIR}/aut/aut_catch_flag.hh"
+        "${CMAKE_CURRENT_SOURCE_DIR}/aut_formula.cc"
+        "${FUNNEL_INC_DIR}/aut/aut_formula.hh"
         PARENT_SCOPE)
 
 set(HELPER_FILES

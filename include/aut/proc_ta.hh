@@ -7,6 +7,8 @@
 
 #include <iostream>
 
+#include "funnels/transitions.hh"
+
 namespace ta{
   class process_ta_t{
   public:
