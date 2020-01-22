@@ -13,6 +13,7 @@
 #include "funnels/funnel_sys.hh"
 #include "aut/aut_collision.hh"
 #include "aut/aut_survival.hh"
+#include "aut/aut_catch_flag.hh"
 #include "aut/ta.hh"
 
 //#include "heuristics/ex1_heu.hh"
@@ -121,7 +122,7 @@ fun_ptr_t get_obstacle_box_fun(){
   return my_obs_fun;
 }
 
-fun_ptr_t get_target_fun(){
+std::vector<fun_ptr_t> get_target_fun(){
   // Creates two cylinders in the upper right corner and the lower left corner
   
   const double c_center = 0.8;
@@ -130,26 +131,32 @@ fun_ptr_t get_target_fun(){
   const process_t &my_proc_targ = utils_ext::process_map.create_and_get
       ("dummy_targ");
   // Create the funnel
-  fun_ptr_t my_targ_fun = make_shared<fun_t>(2*n_targ, "targ_fun", my_proc_targ,
+  fun_ptr_t my_targ_fun_ur = make_shared<fun_t>(n_targ, "targ_fun_ur", my_proc_targ,
                                             get_P_targ(), 0.0, my_dist);
+  
+  fun_ptr_t my_targ_fun_ll = make_shared<fun_t>(n_targ, "targ_fun_ll", my_proc_targ,
+                                                get_P_targ(), 0.0, my_dist);
   //Fill it
-  vector_t_ptr_t t_ptr = std::make_shared<vector_t_t>(2*5);
-  vector_u_ptr_t u_ptr = std::make_shared<vector_u_t>(my_targ_fun->dimu);
-  matrix_ptr_t x_ptr = std::make_shared<matrix_t>(my_targ_fun->dimx, 4 * n_verif);
+  vector_t_ptr_t t_ptr = std::make_shared<vector_t_t>(n_targ); // Dummy time in this case
+  vector_u_ptr_t u_ptr = std::make_shared<vector_u_t>(my_targ_fun_ur->dimu);
+  matrix_ptr_t x_ur_ptr = std::make_shared<matrix_t>(my_targ_fun_ur->dimx, n_targ);
+  
+  matrix_ptr_t x_ll_ptr = std::make_shared<matrix_t>(my_targ_fun_ll->dimx, n_targ);
   
   // set time
-  t_ptr->setLinSpaced(0., 10.); // Dummy, not used in this ex
+  t_ptr->setLinSpaced(0., 1.); // Dummy, not used in this ex
   // dummy for control
   u_ptr->fill(0);
   // right upper
-  x_ptr->block(0, 0, 2, n_targ).fill(c_center);
+  x_ur_ptr->block(0, 0, 2, n_targ).fill(c_center);
   //left lower
-  x_ptr->block(0, n_targ, 2, 2*n_targ).fill(c_center);
+  x_ll_ptr->block(0, 0, 2, n_targ).fill(-c_center);
   
   // Set in funnel
-  my_targ_fun->set_traj(t_ptr, u_ptr, x_ptr);
+  my_targ_fun_ur->set_traj(t_ptr, u_ptr, x_ur_ptr);
+  my_targ_fun_ll->set_traj(t_ptr, u_ptr, x_ll_ptr);
   
-  return my_targ_fun;
+  return {my_targ_fun_ur, my_targ_fun_ll};
 }
 
 
@@ -220,6 +227,10 @@ int main() {
   // longer then the cycle time of the obstacle
   aut_surv::aut_surv my_timer("surv", glob_clk, 1.5*4*2., false);
   
+  // Create a flag-catch automaton
+  aut_catch_flag::aut_catch_flag_t<fun_ptr_t> my_flag_catcher(false, get_target_fun(),
+      false, aut_catch_flag::INCLUSION);
+  
   // Get initial funnel/position
   my_fun_sys->add_funnel(get_init_fun(), false, true);
   
@@ -234,12 +245,15 @@ int main() {
   
   my_timer.register_self(my_ta);
   my_aut_col.register_self(my_ta);
+  my_flag_catcher.register_self(my_ta);
   my_fun_sys->register_self(my_ta);
   
   my_fun_sys->clear_all();
   // Compute transitions and collisions
   // COLLISSIONS FIRST!!
   my_aut_col.compute_collisions(my_fun_sys, t_step);
+  // Now compute flags
+  my_flag_catcher.compute_catches(my_fun_sys, t_step);
   my_fun_sys->generate_transitions(t_step, true, false);
   
   // Auxilliary declarations

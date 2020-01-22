@@ -43,9 +43,24 @@ namespace trans_abs{
   
   ////////////////////////////////////////////
   // Catch
+  
+  size_t add_catch_no_abs(std::deque<edge_t> &edge_list, double t_step,
+                          const switching_trans_info_t &all_trans);
+  size_t add_catch_no_abs(std::deque<edge_t> &edge_list, double t_step,
+                          const intersect_trans_info_t &all_trans);
+  
+  size_t add_catch_med_abs(std::deque<edge_t> &edge_list, double t_step,
+                          const switching_trans_info_t &all_trans);
+  size_t add_catch_med_abs(std::deque<edge_t> &edge_list, double t_step,
+                          const intersect_trans_info_t &all_trans);
+  
+  size_t add_catch_one_abs(std::deque<edge_t> &edge_list, double t_step,
+                          const switching_trans_info_t &all_trans);
+  size_t add_catch_one_abs(std::deque<edge_t> &edge_list, double t_step,
+                          const intersect_trans_info_t &all_trans);
+  
   size_t add_catch_no_tgt_t_abs(std::deque<edge_t> &edge_list, double t_step,
                                 const switching_trans_info_t &all_trans);
-  
   size_t add_catch_no_tgt_t_abs(std::deque<edge_t> &edge_list, double t_step,
                                 const intersect_trans_info_t &all_trans);
   
@@ -53,7 +68,13 @@ namespace trans_abs{
   // Time less helper
   size_t catch_no_tgt_time_helper(std::deque<edge_t> &edge_list, double t_step,
       const trans_info_raw_t &all_trans, const location_t &src, const location_t &tgt,
-      const event_t& evt);
+      const event_t& evt, const clock_ta_t &clk);
+  
+  // No abstraction helper
+  size_t add_catch_no_abs_helper(std::deque<edge_t> &edge_list, double t_step,
+      const trans_info_raw_t &all_trans, const location_t &src,
+      const location_t &tgt, const event_t& evt,
+      const clock_ta_t &clk_src, const clock_ta_t &clk_tgt);
 
 
   ////////////////////////////////////////////

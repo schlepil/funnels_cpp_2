@@ -70,7 +70,7 @@ size_t compute_inclusion_trans(FUNNEL &src, const FUNNEL& tgt,
 }
 
 template<class FUNNEL>
-size_t compute_inclusion_trans(FUNNEL &src, const FUNNEL& tgt,
+size_t compute_inclusion_trans_1(FUNNEL &src, const FUNNEL& tgt,
     double t_step, const clock_ta_t &ctrl_clk, const clock_ta_t &lcl_clk){
   
   switching_trans_info_t info(src.loc(), tgt.loc(),
@@ -80,7 +80,7 @@ size_t compute_inclusion_trans(FUNNEL &src, const FUNNEL& tgt,
 }
 
 template<class FUNNEL>
-size_t compute_inclusion_trans(FUNNEL &src, const FUNNEL& tgt,
+size_t compute_inclusion_trans_2(FUNNEL &src, const FUNNEL& tgt,
     double t_step, const clock_ta_t &ctrl_clk, const clock_ta_t &lcl_clk,
     const location_t &src_loc, const location_t &tgt_loc,
     const event_t &evt){

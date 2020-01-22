@@ -22,21 +22,35 @@ namespace aut_catch_flag{
     INCLUSION
   };
   
-  template <class FLAG_FUN>
+  /*
+   * todo mode 2,3,4
+   * In total there are 4 modes to be considered, all except the first require
+   * the funnel to be separated into two subparts
+   * 1) Can with zeno : event self-edge
+   * 2) Can once : event edge and regular edges from first to second subpart
+   * 3) Must once : event edge from first to second part
+   * 4) Must once, Can with zeno : event edge from first to second
+   *    Second event self-edge
+   *
+   * Non-Zeno has to be ensured by formula
+   */
+  
+  template <class FLAG_FUN_PTR>
   class aut_catch_flag_t : public ta::process_ta_t{
-    using fun_t = typename FLAG_FUN::fun_t;
-    using fun_ptr_t = typename FLAG_FUN::fun_ptr_t;
+    using fun_t = typename FLAG_FUN_PTR::element_type::fun_t;
+    using fun_ptr_t = FLAG_FUN_PTR;
     
-    aut_catch_flag_t(bool is_timed, const std::vector<fun_ptr_t> &flag_fun,
+  public:
+    aut_catch_flag_t(bool is_timed, std::vector<FLAG_FUN_PTR> flag_fun,
         bool create_aut=false, catch_cond_t cond=INCLUSION):
         _create_aut(create_aut), _cond(cond),
-        _proc(flag_fun[0].loc().process()),
-        _flag_fun(flag_fun){
+        _proc(flag_fun[0]->loc().process()),
+        _flag_fun(std::move(flag_fun)){
       
       // Create all events/flags/sync associated to the funnels
       for (size_t k=0;k<flag_fun.size();k++){
         assert(_proc == flag_fun[k]->loc().process());
-        _all_loc.push_back(&flag_fun[k]->loc());
+        _all_loc.push_back(&(flag_fun[k]->loc()));
         _all_event.push_back(&utils_ext::event_map.create_and_get(
             flag_fun[k]->loc().name() + "_e"));
         _all_lbl.push_back(&utils_ext::label_map.create_and_get(
@@ -62,10 +76,12 @@ namespace aut_catch_flag{
       // Create a init dummy state and a default state
       // make all funnel positions committed
       auto p_name = _proc.name();
-      location_t &default_loc =
-          _all_loc.push_back( & utils_ext::loc_map(p_name + "_default", _proc));
-      location_t &init_loc =
-          _all_loc.push_back( & utils_ext::loc_map(p_name + "_init_dummy", _proc));
+      const location_t &default_loc =
+          *_all_loc.emplace_back( & utils_ext::loc_map.create_and_get(p_name +
+          "_default", _proc));
+      const location_t &init_loc =
+          *_all_loc.emplace_back( & utils_ext::loc_map.create_and_get(p_name +
+          "_init_dummy", _proc));
       
       init_loc.set_loc_typ(COMMITTED);
       // Edge from init to default
@@ -73,7 +89,7 @@ namespace aut_catch_flag{
       
       for (size_t k=0; k<_flag_fun.size(); k++){
         // Set the catch funnel committed
-        _flag_fun->loc().set_loc_typ(COMMITTED);
+        _flag_fun[k]->loc().set_loc_typ(COMMITTED);
         // edge from default to this label
         _aux_edges.emplace_back(default_loc, *_all_loc[k],
             *_all_event[k]);
@@ -83,7 +99,7 @@ namespace aut_catch_flag{
         // Add the sync
         _all_sync[k]->add_sync(_proc, *_all_event[k]);
         // Add the label to the state
-        _flag_fun[k]->add_label(*_all_lbl[k]);
+        _flag_fun[k]->loc().add_label(*_all_lbl[k]);
       }
       // Done
     }
@@ -110,19 +126,19 @@ namespace aut_catch_flag{
           continue;
         }
         // Set abstraction
-        fun._trans_abs = _abs_map[fun->loc().id()];
+        fun->_trans_abs = _abs_map[fun->loc().id()];
         // Compute the catches with each catch_funnel
         for (size_t k=0; k<_flag_fun.size(); k++){
           switch (_cond){
             case INCLUSION:
-              n_delta_trans += compute_inclusion_trans(*fun, *_flag_fun[k],
-                  t_step, fun_sys_ptr->ctrl_clk(), _clk_catch,
-                  *fun, *fun, *_all_event[k]);
+              n_delta_trans += compute_inclusion_trans_2(*fun, *(_flag_fun[k]),
+                  t_step, fun_sys_ptr->ctrl_clk(), *_clk_catch,
+                  fun->loc(), fun->loc(), *_all_event[k]);
               break;
             case INTERSECT:
-              n_delta_trans += compute_inclusion_trans(*fun, *_flag_fun[k],
-                  t_step, fun_sys_ptr->ctrl_clk(), _clk_catch,
-                  *fun, *fun, *_all_event[k]);
+              n_delta_trans += compute_intersecting_trans(*fun, *(_flag_fun[k]),
+                  t_step, fun_sys_ptr->ctrl_clk(), *_clk_catch,
+                  fun->loc(), fun->loc(), *_all_event[k]);
               break;
           }
         } // flag_fun
@@ -196,11 +212,11 @@ namespace aut_catch_flag{
     const process_t &_proc;
     clock_ta_t *_clk_catch = nullptr;
     std::vector<edge_t> _aux_edges;
-    std::vector<location_t *> _all_loc;
+    std::vector<const location_t *> _all_loc;
     std::vector<event_t *> _all_event;
     std::vector<label_t *> _all_lbl;
     std::vector<sync_t *> _all_sync;
-    const std::vector<fun_ptr_t> _flag_fun;
+    const std::vector<FLAG_FUN_PTR> _flag_fun;
   
     std::unordered_map<size_t,
         std::shared_ptr<trans_abs::catch_trans_abstract_t>> _abs_map;
