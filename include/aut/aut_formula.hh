@@ -14,7 +14,7 @@ using namespace funnels;
 
 namespace aut_formula{
   
-  class aut_formula{
+  class aut_formula: public ta::process_ta_t{
   public:
     aut_formula(std::string formula);
   
@@ -28,10 +28,10 @@ namespace aut_formula{
     const std::string _formula;
   };
   
-  class aut_all_times_n{
+  class aut_all_times_n: public ta::process_ta_t{
   public:
     aut_all_times_n(std::string proc_name, std::vector<event_t *> event_vec,
-        std::vector<sync_t *> &sync_vec, size_t n_repeat);
+        std::vector<sync_t *> sync_vec, size_t n_repeat);
   
   
     std::string declare_proc()const;
@@ -60,6 +60,7 @@ namespace aut_formula{
     label_t &_acc_lbl;
     
     std::vector<event_t *> _event_vec;
+    std::vector<sync_t *> _sync_vec;
     size_t _n_repeat;
     
   

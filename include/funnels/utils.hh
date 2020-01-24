@@ -56,7 +56,7 @@ namespace funnels{
   class expression_t{
   public:
     expression_t(const named_var_t &lhs, std::string act,
-        long _value=0,
+        long value=0,
         std::vector<std::pair<std::string, const named_var_t *>> rhs=
         std::vector<std::pair<std::string, const named_var_t *>>());
     
@@ -70,7 +70,7 @@ namespace funnels{
   protected:
     const named_var_t &_lhs;
     const std::string _act;
-    const long _value;
+    const size_t _value;
     std::vector<std::pair<std::string, const named_var_t *>> _rhs;
   };
   

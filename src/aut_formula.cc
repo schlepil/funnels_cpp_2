@@ -16,7 +16,7 @@ namespace aut_formula{
   
   // aut_all_times_n
   aut_all_times_n::aut_all_times_n(std::string proc_name,
-      std::vector<event_t *> event_vec, std::vector<sync_t *> &sync_vec,
+      std::vector<event_t *> event_vec, std::vector<sync_t *> sync_vec,
       size_t n_repeat):
       _proc(utils_ext::process_map.create_and_get(proc_name)),
       _init_dummy(utils_ext::loc_map.create_and_get(_proc.name()
@@ -24,14 +24,18 @@ namespace aut_formula{
       _acc_lbl(utils_ext::label_map.create_and_get(proc_name +
           "_ordered_" + std::to_string(n_repeat))),
       _event_vec(std::move(event_vec)),
+      _sync_vec(std::move(sync_vec)),
       _n_repeat(n_repeat){
     
     edge_t *this_edge_ptr;
     
+    // Set initial
+    _init_dummy.set_initial(true);
+    
     // Add the process to all syncs
-    assert(event_vec.size() == sync_vec.size());
-    for (size_t k=0; k<event_vec.size(); k++){
-      sync_vec[k]->add_sync(_proc, *event_vec[k]);
+    assert(_event_vec.size() == _sync_vec.size());
+    for (size_t k=0; k<_event_vec.size(); k++){
+      _sync_vec[k]->add_sync(_proc, *_event_vec[k]);
     }
     
     // Create all states and edges
@@ -79,6 +83,7 @@ namespace aut_formula{
   
   std::string aut_all_times_n::declare_loc()const{
     std::string tmp_string = "";
+    tmp_string += _init_dummy.declare() + "\n";
     for (const location_t *a_loc : _aut_loc){
       tmp_string += a_loc->declare() + "\n";
     }

@@ -17,7 +17,7 @@ include_directories(${FUNNEL_INC_DIR})
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG -O3")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG -O3 -march=native -mtune=native")
 
 
 add_library(libutil STATIC ${UTIL_FILES})

@@ -27,10 +27,12 @@ namespace funnels{
     using fun_family_ptr_t = typename FUNNEL::fun_family_ptr_t;
     
     funnel_sys_t(const clock_ta_t &ctrl_clk, const clock_ta_t &lcl_clk,
-                 const process_t &proc):
-        _ctrl_clk(ctrl_clk), _lcl_clk(lcl_clk),
-        _init_dummy(utils_ext::loc_map.create_and_get(proc.name()
-                                                      +"_init_dummy", proc, funnels::location_type_t::COMMITTED)){
+        const process_t &proc,
+        trans_abs::abst_lvl_t abst_lvl=trans_abs::ONE_ABS):
+        
+      _abst_lvl(abst_lvl), _ctrl_clk(ctrl_clk), _lcl_clk(lcl_clk),
+      _init_dummy(utils_ext::loc_map.create_and_get(proc.name()
+          +"_init_dummy", proc, funnels::location_type_t::COMMITTED)){
       _init_dummy.set_initial(true);
     }
     
@@ -183,7 +185,7 @@ namespace funnels{
           src_fun->_trans_abs =
               _abs_map.insert(
                   {std::pair(src_fun->loc().id(), tgt_fun->loc().id()),
-                   std::make_shared<trans_abs::switching_trans_abstract_t>()}).first->second;
+                   std::make_shared<trans_abs::switching_trans_abstract_t>(_abst_lvl)}).first->second;
           
           n_trans_delta_d = compute_inclusion_trans_1(*src_fun, *tgt_fun,
                                                     t_step, _ctrl_clk, _lcl_clk);
@@ -284,6 +286,7 @@ namespace funnels{
     }
   
   public:
+    trans_abs::abst_lvl_t _abst_lvl;
     location_t &_init_dummy;
     
     // declaring

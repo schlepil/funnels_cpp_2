@@ -42,33 +42,35 @@ namespace aut_catch_flag{
     
   public:
     aut_catch_flag_t(bool is_timed, std::vector<FLAG_FUN_PTR> flag_fun,
-        bool create_aut=false, catch_cond_t cond=INCLUSION):
-        _create_aut(create_aut), _cond(cond),
-        _proc(flag_fun[0]->loc().process()),
+                     bool declare_aut=false, catch_cond_t cond=INCLUSION,
+                     trans_abs::abst_lvl_t base_abst_lvl=trans_abs::NO_ABS):
+        _declare_aut(declare_aut), _cond(cond), _base_abst_lvl(base_abst_lvl),
+        _is_timed(is_timed), _proc(flag_fun[0]->loc().process()),
         _flag_fun(std::move(flag_fun)){
       
       // Create all events/flags/sync associated to the funnels
-      for (size_t k=0;k<flag_fun.size();k++){
-        assert(_proc == flag_fun[k]->loc().process());
-        _all_loc.push_back(&(flag_fun[k]->loc()));
+      for (size_t k=0;k<_flag_fun.size();k++){
+        assert(_proc == _flag_fun[k]->loc().process());
+        _all_loc.push_back(&(_flag_fun[k]->loc()));
         _all_event.push_back(&utils_ext::event_map.create_and_get(
-            flag_fun[k]->loc().name() + "_e"));
+            _flag_fun[k]->loc().name() + "_e"));
         _all_lbl.push_back(&utils_ext::label_map.create_and_get(
-            flag_fun[k]->loc().name() + "_lbl"));
+            _flag_fun[k]->loc().name() + "_lbl"));
         _all_sync.push_back(&utils_ext::sync_map.create_and_get(
-            flag_fun[k]->loc().name() + "_sync"));
+            _flag_fun[k]->loc().name() + "_sync"));
       }
       
       if (is_timed){
         _clk_catch =
             &utils_ext::clock_map.create_and_get(_proc.name()+"_clk_catch");
+      }else{
+        _clk_catch =
+            &utils_ext::clock_map.create_and_get(_proc.name()+"_clk_dummy");
       }
       
       // Create the associated auxilliary automaton
-      if(_create_aut){
-        // No restriction on the occurrence of the labels
-        construct_no_restrict_aux_aut();
-      }
+      construct_no_restrict_aux_aut();
+      
       // Done
     }
     
@@ -96,8 +98,10 @@ namespace aut_catch_flag{
         // edge from this label to default
         _aux_edges.emplace_back(*_all_loc[k], default_loc,
             utils_ext::event_map["no_action"]);
-        // Add the sync
-        _all_sync[k]->add_sync(_proc, *_all_event[k]);
+        // Add the sync if necessary
+        if (_declare_aut) {
+          _all_sync[k]->add_sync(_proc, *_all_event[k]);
+        }
         // Add the label to the state
         _flag_fun[k]->loc().add_label(*_all_lbl[k]);
       }
@@ -113,6 +117,10 @@ namespace aut_catch_flag{
       // Add to the sync, make transition from and to the same funnel if
       // colliding
       
+      for (size_t k=0; k<_all_sync.size(); k++){
+        _all_sync[k]->add_sync(fun_sys_ptr->process(), *_all_event[k]);
+      }
+      
       // todo approximate the transitions
       // Check catch condition for each funnel
       size_t n_delta_trans, n_trans=0, i=0;
@@ -126,7 +134,9 @@ namespace aut_catch_flag{
           continue;
         }
         // Set abstraction
-        fun->_trans_abs = _abs_map[fun->loc().id()];
+        fun->_trans_abs = _abs_map.insert({fun->loc().id(),
+                 std::make_shared<trans_abs::catch_trans_abstract_t>(_base_abst_lvl)})
+                     .first->second;
         // Compute the catches with each catch_funnel
         for (size_t k=0; k<_flag_fun.size(); k++){
           switch (_cond){
@@ -151,7 +161,7 @@ namespace aut_catch_flag{
   
     std::string declare_proc()const{
       std::string tmp_string = "";
-      if (_create_aut){
+      if (_declare_aut){
         tmp_string = _proc.declare() + "\n";
       }
       return tmp_string;
@@ -159,7 +169,7 @@ namespace aut_catch_flag{
   
     std::string declare_clk()const{
       std::string tmp_string = "";
-      if (_clk_catch != nullptr){
+      if (_is_timed){
         tmp_string = _clk_catch->declare() + "\n";
       }
       return tmp_string;
@@ -183,7 +193,7 @@ namespace aut_catch_flag{
   
     std::string declare_loc()const{
       std::string tmp_string = "";
-      if (_create_aut){
+      if (_declare_aut){
         for (const location_t *a_loc : _all_loc){
           tmp_string += a_loc->declare() + "\n";
         }
@@ -193,7 +203,7 @@ namespace aut_catch_flag{
   
     std::string declare_edge()const{
       std::string tmp_string = "";
-      if (_create_aut){
+      if (_declare_aut){
         for (const edge_t &a_edge : _aux_edges){
           tmp_string += a_edge.declare() + "\n";
         }
@@ -207,10 +217,12 @@ namespace aut_catch_flag{
     }
     
     // Member variables
-    bool _create_aut;
+    bool _declare_aut;
     catch_cond_t _cond;
+    trans_abs::abst_lvl_t _base_abst_lvl;
+    bool _is_timed;
     const process_t &_proc;
-    clock_ta_t *_clk_catch = nullptr;
+    clock_ta_t *_clk_catch;
     std::vector<edge_t> _aux_edges;
     std::vector<const location_t *> _all_loc;
     std::vector<event_t *> _all_event;

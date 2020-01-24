@@ -28,7 +28,7 @@ const double max_r = 0.5+5.*min_r; // Minimal radius
 const double max_alpha_step = max_r_step*max_r_step; // Minimal step for alpha
 const double min_alpha = min_r*min_r; // Minimal alpha for ellipsoids
 const double max_alpha = max_r*max_r; // Minimal alpha for ellipsoids
-const double max_vel = 1.; // Norm of velocity
+const double max_vel = 1.; // Maximal norm of velocity
 const double min_vel_diff = 0.1; // Norm difference in velocity
 const double min_ang_diff = 20.*M_PI/180.;
 const double gamma_conv = 10.; // exponential convergence rate
@@ -327,7 +327,7 @@ void add_new_funnels(const FUN_PTR_T& src,
   
   // "Dynamic" funnels
   // Loop over all velocities <-> planes
-  for (double n_vel=inter_dist; n_vel<=1.0; n_vel+=inter_dist) {
+  for (double n_vel=inter_dist; n_vel<=max_vel; n_vel+=inter_dist) {
       // Loop over all angles
     for (double d_alpha = 0.; d_alpha <= 2 * M_PI - d_alpha / 2;
          d_alpha += min_ang_diff) {

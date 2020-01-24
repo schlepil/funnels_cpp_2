@@ -99,7 +99,7 @@ compute_covered_times_fixed_ellip(FUNNEL &src, const FUNNEL &tgt){
     n_alpha=0; n_beta=0;
     if (is_covered(0)){
       in_interval_src=true;
-      blck_idx.emplace_back(0, 0);
+//      blck_idx.emplace_back(0, 0);
     }else{
       in_interval_src = false;
     }
@@ -124,9 +124,9 @@ compute_covered_times_fixed_ellip(FUNNEL &src, const FUNNEL &tgt){
             (b_vec[b_vec.size() - 2] >
              a_vec[a_vec.size() - 1])){
           assert(!blck_idx.empty());
-          blck_idx.back().second = i_in;
+          blck_idx.back().second = a_vec.size()-1;
         }else{
-          blck_idx.emplace_back(i_in, i_in);
+          blck_idx.emplace_back(a_vec.size()-1, a_vec.size()-1);
         }
       }else{
         n_alpha = find_next_high(n_beta, is_covered);
@@ -138,6 +138,19 @@ compute_covered_times_fixed_ellip(FUNNEL &src, const FUNNEL &tgt){
       }
     }
   } // End this tgt
+
+#ifndef NDEBUG
+  assert(a_vec.size()==b_vec.size() && a_vec.size()==z_vec.size());
+  for (size_t k=0; k<a_vec.size();k++){
+    assert(a_vec[k]<=b_vec[k]);
+    assert(a_vec[k]>=0. && b_vec[k]>=0. && z_vec[k]>=0.);
+  }
+  for(const auto &a_pair : blck_idx){
+    assert(a_pair.first>=0 && a_pair.first<=a_pair.second &&
+        a_pair.second<a_vec.size());
+  }
+
+#endif
 
   return all_trans_raw;
 }
@@ -216,6 +229,13 @@ intersect_trans_info_raw_t
       }
     }
   } // End this tgt
+#ifndef NDEBUG
+  assert(a_vec.size()==b_vec.size() && a_vec.size()==z_vec.size());
+  for (size_t k=0; k<a_vec.size();k++){
+    assert(a_vec[k]<=b_vec[k]);
+    assert(a_vec[k]>=0. && b_vec[k]>=0. && z_vec[k]>=0.);
+  }
+#endif
   return all_trans_raw;
 }
 

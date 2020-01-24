@@ -17,6 +17,7 @@ namespace trans_abs{
     NO_ABS,
     MED_ABS,
     ONE_ABS,
+    ONE_PER_BLOCK,
     NO_TGT_T_ABS
   };
   
@@ -31,6 +32,9 @@ namespace trans_abs{
   
   size_t add_switch_one_abs(std::deque<edge_t> &edge_list, double t_step,
                            const switching_trans_info_t &all_trans);
+  
+  size_t add_switch_one_per_block_abs(std::deque<edge_t> &edge_list,
+      double t_step, const switching_trans_info_t &all_trans);
   
   ////////////////////////////////////////////
   // Intersect
@@ -80,6 +84,8 @@ namespace trans_abs{
   ////////////////////////////////////////////
   class trans_abstract_t{
   public:
+    trans_abstract_t(abst_lvl_t abst_lvl=NO_ABS);
+    
     void set_abst_lvl(abst_lvl_t new_lvl);
     
     virtual size_t operator()(std::deque<edge_t> &edge_list, double t_step,
@@ -94,12 +100,17 @@ namespace trans_abs{
   
   
   class switching_trans_abstract_t: public trans_abstract_t{
+  public:
+    
+    switching_trans_abstract_t(abst_lvl_t abst_lvl=NO_ABS);
     
     size_t operator()(std::deque<edge_t> &edge_list, double t_step,
         const switching_trans_info_t &all_trans);
   };
   
   class intersect_trans_abstract_t: public trans_abstract_t{
+  public:
+    intersect_trans_abstract_t(abst_lvl_t abst_lvl);
     
     size_t operator()(std::deque<edge_t> &edge_list, double t_step,
                       const intersect_trans_info_t &all_trans);
@@ -107,6 +118,8 @@ namespace trans_abs{
   
   class   catch_trans_abstract_t: public trans_abstract_t{
   public:
+    
+    catch_trans_abstract_t(abst_lvl_t abst_lvl=NO_ABS);
     
     // Has to deal with both structures: switching and intersecting
     size_t operator()(std::deque<edge_t> &edge_list, double t_step,

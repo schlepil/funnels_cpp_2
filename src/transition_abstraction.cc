@@ -56,6 +56,30 @@ namespace trans_abs{
     return 1;
   }
   
+  size_t add_switch_one_per_block_abs(std::deque<edge_t> &edge_list,
+      double t_step, const switching_trans_info_t &all_trans){
+    assert(all_trans.a_vec.size()>=all_trans.blck_idx.size() &&
+        "There cannot be more transition groups then transitions");
+    // Add the first transition of each block
+    if (all_trans.size()==0){
+      return 0;
+    }
+    size_t idx;
+    for (const auto & blck : all_trans.blck_idx) {
+      idx = blck.first;
+      edge_list.push_back(
+          switching_transition(all_trans._src, all_trans._tgt,
+                               all_trans._evt, all_trans._ctrl_clk,
+                               all_trans._lcl_clk,
+                               std::ceil(t_step * all_trans.a_vec[idx]),
+                               std::floor(t_step * all_trans.b_vec[idx]),
+                               std::round(t_step * all_trans.z_vec[idx]),
+                               all_trans.is_diag));
+    }
+    return all_trans.blck_idx.size();
+    
+  }
+  
   ////////////////////////////////////////////
   // Intersect
   
@@ -213,6 +237,9 @@ namespace trans_abs{
   }
   
   
+  trans_abstract_t::trans_abstract_t(abst_lvl_t abst_lvl):_abst_lvl(abst_lvl)
+  {}
+  
   void trans_abstract_t::set_abst_lvl(abst_lvl_t new_lvl){
     _abst_lvl = new_lvl;
   }
@@ -226,6 +253,9 @@ namespace trans_abs{
     throw std::runtime_error("Virtual");
   }
   
+  switching_trans_abstract_t::switching_trans_abstract_t(abst_lvl_t abst_lvl):
+      trans_abstract_t(abst_lvl){}
+  
   size_t switching_trans_abstract_t::operator()(std::deque<edge_t> &edge_list, double t_step,
                     const switching_trans_info_t &all_trans) {
     
@@ -236,13 +266,18 @@ namespace trans_abs{
         return add_switch_med_abs(edge_list, t_step, all_trans);
       case ONE_ABS:
         return add_switch_one_abs(edge_list, t_step, all_trans);
+      case ONE_PER_BLOCK:
+        return add_switch_one_per_block_abs(edge_list, t_step, all_trans);
       case NO_TGT_T_ABS:
         throw std::runtime_error("This abstraction is not valid for switching");
     }
     throw std::runtime_error("Unknown abstraction");
     return 0;
   }
-
+  
+  intersect_trans_abstract_t::intersect_trans_abstract_t(abst_lvl_t abst_lvl):
+      trans_abstract_t(abst_lvl){}
+  
   size_t intersect_trans_abstract_t::operator()(std::deque<edge_t> &edge_list, double t_step,
                     const intersect_trans_info_t &all_trans){
     
@@ -271,6 +306,9 @@ namespace trans_abs{
     throw std::runtime_error("Unknown abstraction");
     return 0;
   }
+  
+  catch_trans_abstract_t::catch_trans_abstract_t(abst_lvl_t abst_lvl):
+      trans_abstract_t(abst_lvl){};
   
   size_t catch_trans_abstract_t::operator()(std::deque<edge_t> &edge_list, double t_step,
                     const intersect_trans_info_t &all_trans){

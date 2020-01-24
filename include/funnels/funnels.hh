@@ -169,15 +169,17 @@ namespace funnels {
     }
     
     bool in_family(const fun_ptr_t &other)const{
-      if (this->operator==(other)){
-        return true;
-      }
-      for (const auto & fun_set : *_fun_family_ptr){
-        if (fun_set.find(other) != fun_set.end()){
-          return true;
-        }
-      }
-      return false;
+//      if (this->operator==(other)){
+//        return true;
+//      }
+//      for (const auto & fun_set : *_fun_family_ptr){
+//        if (fun_set.find(other) != fun_set.end()){
+//          return true;
+//        }
+//      }
+//      return false;
+      // Funnels belong to the same family if thy share a fu_family_ptr
+      return _fun_family_ptr == other->_fun_family_ptr;
     }
     
     void gen_invariant(double t_step, const clock_ta_t & ctrl_clk){

@@ -74,6 +74,8 @@ namespace funnels {
       std::vector<std::pair<std::string, const named_var_t *>> rhs):
       _lhs(lhs), _act(std::move(act)), _value(value), _rhs(std::move(rhs)){
     assert(check_op__(_act));
+    assert(value>=0);
+    assert(value<=1000000);
     for (const auto & a_rhs : _rhs){
       assert(check_op__(a_rhs.first));
     }

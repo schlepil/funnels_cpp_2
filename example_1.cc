@@ -14,6 +14,7 @@
 #include "aut/aut_collision.hh"
 #include "aut/aut_survival.hh"
 #include "aut/aut_catch_flag.hh"
+#include "aut/aut_formula.hh"
 #include "aut/ta.hh"
 
 //#include "heuristics/ex1_heu.hh"
@@ -28,8 +29,8 @@ using cvx_hull_t = helper_geom::aligned_bounding_box_t<lyap_t>;
 using fun_t = funnels::funnel_t<cvx_hull_t>;
 
 using fun_ptr_t = fun_t::fun_ptr_t;
-using fun_sys_t = funnel_sys_t<fun_t>;
-using fun_sys_ptr_t = std::shared_ptr<fun_sys_t>;
+using fun_sys_f_t = funnel_sys_t<fun_t>;
+using fun_sys_ptr_t = std::shared_ptr<fun_sys_f_t>;
 
 using matrix_t = fun_t::matrix_t;
 using vector_x_t = fun_t::vector_x_t;
@@ -42,8 +43,8 @@ using vector_t_ptr_t = fun_t::vector_t_ptr_t;
 
 using p_mat_t = lyap_t::s_mat_t;
 
-const size_t n_verif=100;
-const double_t t_step=200;
+size_t *n_verif_obs;
+double_t *t_step;
 
 // Predefinitions
 dist_t my_dist;
@@ -62,7 +63,7 @@ p_mat_t get_P_obs(){
 p_mat_t get_P_targ(){
   // Cylinder with radius 0.25
   p_mat_t P_targ = p_mat_t::Zero();
-  P_targ(0, 0) = 4.; P_targ(1, 1) = 4.;
+  P_targ(0, 0) = 8.; P_targ(1, 1) = 8.;
   P_targ(2, 2) = 1.e-16; P_targ(3, 3) = 1.e-16;
   return P_targ;
 }
@@ -79,12 +80,12 @@ fun_ptr_t get_obstacle_box_fun(){
   const process_t &my_proc_obs = utils_ext::process_map.create_and_get
       ("obs_col");
   // Create the funnel
-  fun_ptr_t my_obs_fun = make_shared<fun_t>(4 * n_verif, "obs_fun", my_proc_obs,
+  fun_ptr_t my_obs_fun = make_shared<fun_t>(4 * (*n_verif_obs), "obs_fun", my_proc_obs,
                                             4.*get_P_obs(), gamma_obs, my_dist);
   //Fill it
-  vector_t_ptr_t t_ptr = std::make_shared<vector_t_t>(4 * n_verif);
+  vector_t_ptr_t t_ptr = std::make_shared<vector_t_t>(4 * (*n_verif_obs));
   vector_u_ptr_t u_ptr = std::make_shared<vector_u_t>(my_obs_fun->dimu);
-  matrix_ptr_t x_ptr = std::make_shared<matrix_t>(my_obs_fun->dimx, 4 * n_verif);
+  matrix_ptr_t x_ptr = std::make_shared<matrix_t>(my_obs_fun->dimx, 4 * (*n_verif_obs));
   
   // set time
   t_ptr->setLinSpaced(0., 4.*corner/vel);
@@ -92,29 +93,29 @@ fun_ptr_t get_obstacle_box_fun(){
   u_ptr->fill(0);
   // Obstacle will start off upper left corner and go clock-wise
   //left upper -> right upper
-  x_ptr->block(0, 0, 1, n_verif) =
-      Eigen::VectorXd::LinSpaced(n_verif, -corner, corner).transpose();
-  x_ptr->block(1, 0, 1, n_verif).fill(corner);
-  x_ptr->block(2, 0, 1, n_verif).fill(vel);
-  x_ptr->block(3, 0, 1, n_verif).fill(0);
+  x_ptr->block(0, 0, 1, (*n_verif_obs)) =
+      Eigen::VectorXd::LinSpaced((*n_verif_obs), -corner, corner).transpose();
+  x_ptr->block(1, 0, 1, (*n_verif_obs)).fill(corner);
+  x_ptr->block(2, 0, 1, (*n_verif_obs)).fill(vel);
+  x_ptr->block(3, 0, 1, (*n_verif_obs)).fill(0);
   //right upper -> right lower
-  x_ptr->block(0, n_verif, 1, n_verif).fill(corner);
-  x_ptr->block(1, n_verif, 1, n_verif) =
-      Eigen::VectorXd::LinSpaced(n_verif, corner, -corner).transpose();
-  x_ptr->block(2, n_verif, 1, n_verif).fill(0);
-  x_ptr->block(3, n_verif, 1, n_verif).fill(-vel);
+  x_ptr->block(0, (*n_verif_obs), 1, (*n_verif_obs)).fill(corner);
+  x_ptr->block(1, (*n_verif_obs), 1, (*n_verif_obs)) =
+      Eigen::VectorXd::LinSpaced((*n_verif_obs), corner, -corner).transpose();
+  x_ptr->block(2, (*n_verif_obs), 1, (*n_verif_obs)).fill(0);
+  x_ptr->block(3, (*n_verif_obs), 1, (*n_verif_obs)).fill(-vel);
   // right lower -> left lower
-  x_ptr->block(0, 2 * n_verif, 1, n_verif) =
-      Eigen::VectorXd::LinSpaced(n_verif, corner, -corner).transpose();
-  x_ptr->block(1, 2 * n_verif, 1, n_verif).fill(-corner);
-  x_ptr->block(2, 2 * n_verif, 1, n_verif).fill(-vel);
-  x_ptr->block(3, 2 * n_verif, 1, n_verif).fill(0);
+  x_ptr->block(0, 2 * (*n_verif_obs), 1, (*n_verif_obs)) =
+      Eigen::VectorXd::LinSpaced((*n_verif_obs), corner, -corner).transpose();
+  x_ptr->block(1, 2 * (*n_verif_obs), 1, (*n_verif_obs)).fill(-corner);
+  x_ptr->block(2, 2 * (*n_verif_obs), 1, (*n_verif_obs)).fill(-vel);
+  x_ptr->block(3, 2 * (*n_verif_obs), 1, (*n_verif_obs)).fill(0);
   //left lower -> left upper
-  x_ptr->block(0, 3 * n_verif, 1, n_verif).fill(-corner);
-  x_ptr->block(1, 3 * n_verif, 1, n_verif) =
-      Eigen::VectorXd::LinSpaced(n_verif, -corner, corner).transpose();
-  x_ptr->block(2, 3 * n_verif, 1, n_verif).fill(0);
-  x_ptr->block(3, 3 * n_verif, 1, n_verif).fill(vel);
+  x_ptr->block(0, 3 * (*n_verif_obs), 1, (*n_verif_obs)).fill(-corner);
+  x_ptr->block(1, 3 * (*n_verif_obs), 1, (*n_verif_obs)) =
+      Eigen::VectorXd::LinSpaced((*n_verif_obs), -corner, corner).transpose();
+  x_ptr->block(2, 3 * (*n_verif_obs), 1, (*n_verif_obs)).fill(0);
+  x_ptr->block(3, 3 * (*n_verif_obs), 1, (*n_verif_obs)).fill(vel);
   
   // Set in funnel
   my_obs_fun->set_traj(t_ptr, u_ptr, x_ptr);
@@ -181,12 +182,29 @@ fun_ptr_t get_init_fun(){
   return my_init_fun;
 }
 
-int main() {
+int main(int arg, char *argv[]) {
   
   // Playground is between -1 and 1 in x and y dimension
   // Obstacle moves along a scaled square box of side length 0.5
   // obstacle is a sphere of size 0.5
-  
+  size_t n_repeat = 2;
+  // First argument: How often all flags have to be seen
+  if (arg>=2){
+    n_repeat = std::stoi(argv[1]);
+  }
+  // Second argument: t_step conversion from continuous time (double)
+  //                  to discrete verif time (int)
+  if (arg>=3){
+    *t_step = std::stod(argv[2]);
+  }else{
+    *t_step = 100;
+  }
+  // Third argument: n_verif_obs how many steps are used for obstacle evasion
+  if (arg>=4){
+    *n_verif_obs = std::stoi(argv[3]);
+  }else{
+    *n_verif_obs = 200;
+  }
   
   std::cout << "funnel sys" << std::endl;
   
@@ -217,8 +235,8 @@ int main() {
   
   
   // Create the funnel system (funnels will be added later
-  fun_sys_ptr_t my_fun_sys = std::make_shared<fun_sys_t>(ctrl_clk, lcl_clk,
-      fun_sys_proc);
+  fun_sys_ptr_t my_fun_sys = std::make_shared<fun_sys_f_t>(
+      ctrl_clk, lcl_clk, fun_sys_proc, trans_abs::ONE_PER_BLOCK);
   
   // Create the obstacle automaton
   aut_col::aut_col<fun_t> my_aut_col(get_obstacle_box_fun(), obs_clk);
@@ -228,8 +246,14 @@ int main() {
   aut_surv::aut_surv my_timer("surv", glob_clk, 1.5*4*2., false);
   
   // Create a flag-catch automaton
-  aut_catch_flag::aut_catch_flag_t<fun_ptr_t> my_flag_catcher(false, get_target_fun(),
+  auto flag_funnels = get_target_fun();
+  aut_catch_flag::aut_catch_flag_t<fun_ptr_t> my_flag_catcher(false, flag_funnels,
       false, aut_catch_flag::INCLUSION);
+  
+  // Create a process / automaton that represents a formula over the events
+  // Here we want to visit all catch funnels in their given order exactly n-times
+  aut_formula::aut_all_times_n my_formula("n_visit", my_flag_catcher._all_event,
+      my_flag_catcher._all_sync, 2);
   
   // Get initial funnel/position
   my_fun_sys->add_funnel(get_init_fun(), false, true);
@@ -246,15 +270,17 @@ int main() {
   my_timer.register_self(my_ta);
   my_aut_col.register_self(my_ta);
   my_flag_catcher.register_self(my_ta);
+  my_formula.register_self(my_ta);
   my_fun_sys->register_self(my_ta);
+  
   
   my_fun_sys->clear_all();
   // Compute transitions and collisions
   // COLLISSIONS FIRST!!
-  my_aut_col.compute_collisions(my_fun_sys, t_step);
+  my_aut_col.compute_collisions(my_fun_sys, (*t_step));
   // Now compute flags
-  my_flag_catcher.compute_catches(my_fun_sys, t_step);
-  my_fun_sys->generate_transitions(t_step, true, false);
+  my_flag_catcher.compute_catches(my_fun_sys, (*t_step));
+  my_fun_sys->generate_transitions((*t_step), true, false);
   
   // Auxilliary declarations
   // todo not very beautiful
@@ -265,7 +291,7 @@ int main() {
   my_ta._fun_event.push_back(aux_event);
   
   // Timer update
-  my_timer.set_t_step(t_step);
+  my_timer.set_t_step((*t_step));
   
   std::cerr << my_ta.declare() << std::endl;
   
