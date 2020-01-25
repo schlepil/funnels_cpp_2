@@ -65,7 +65,7 @@ namespace trajectories{
     }
     
     void set_cyclic(bool is_cyclic){
-      _is_cyclic=true;
+      _is_cyclic=is_cyclic;
     }
     bool is_cyclic(){
       return _is_cyclic;
@@ -85,6 +85,7 @@ namespace trajectories{
       _x = other.x_ptr();
       _u = other.u_ptr();
       _t = other.t_ptr();
+      _is_cyclic = other._is_cyclic;
     }
   
     void set_x(const matrix_ptr_t &x_ptr){
@@ -107,6 +108,13 @@ namespace trajectories{
       set_t(t);
       set_u(u);
       set_x(x);
+    }
+    
+    bool check_cyclic(){
+      // If start and end-point are close enough -> cyclic
+      // Treshhold is relative to largest elem
+      return (_x->template leftCols<1>() -
+          _x->template rightCols<1>()).norm() < 1e-8*_x->array().abs().maxCoeff();
     }
     
     template<class DERIVED1, class DERIVED2>

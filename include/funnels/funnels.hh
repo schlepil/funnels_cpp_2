@@ -53,6 +53,7 @@ namespace funnels {
     using traj_t::t_ptr;
     using traj_t::set_cyclic;
     using traj_t::is_cyclic;
+    using lyap_t::check_cyclic;
     using traj_t::dimx;
     using traj_t::dimp;
     using traj_t::dimv;

@@ -50,6 +50,8 @@ std::pair<FUN_PTR_T, FUN_PTR_T> get_this_funnel(const FUN_PTR_T &src, double rad
   
   using fun_t = typename FUN_PTR_T::element_type;
   
+  bool is_cyclic = false;
+  
   // Get maximal time before the maximal length is attained
   // or the playground is left
   Eigen::Vector4d x0 = x0_O;
@@ -120,6 +122,10 @@ std::pair<FUN_PTR_T, FUN_PTR_T> get_this_funnel(const FUN_PTR_T &src, double rad
   x0.block(2,0,2,1) -= -t_max*u;
   new_fun2->compute(x0, 0., 2.*t_max, u);
   
+  // Check if cyclic
+  new_fun1->set_cyclic(new_fun1->check_cyclic());
+  new_fun1->set_cyclic(new_fun2->check_cyclic());
+  
   
   // He starts a family
   new_fun1->start_family(new_fun1);
@@ -130,7 +136,7 @@ std::pair<FUN_PTR_T, FUN_PTR_T> get_this_funnel(const FUN_PTR_T &src, double rad
 
 template <class FUN_PTR_T>
 FUN_PTR_T get_this_funnel_1(const FUN_PTR_T &src, double radius,
-    const Eigen::Vector4d &x0_O, const Eigen::Vector2d u){
+    const Eigen::Vector4d &x0_O, const Eigen::Vector2d u, bool is_cyclic=false){
   
   using fun_t = typename FUN_PTR_T::element_type;
   
@@ -200,7 +206,8 @@ FUN_PTR_T get_this_funnel_1(const FUN_PTR_T &src, double radius,
   x0 = -x0_O;
   x0.block(2,0,2,1) -= -t_max*u;
   
-  
+  // Set cyclif
+  new_fun->set_cyclic(is_cyclic);
   // He starts a family
   new_fun->start_family(new_fun);
   
@@ -301,6 +308,7 @@ void add_new_funnels(const FUN_PTR_T& src,
   // The problem is purely symmetric
   
   // Grid of static funnels
+  // -> "cyclic"
   std::array<int, 2> signs = {-1,1};
   x0.setZero();
   vel_p.setZero();
@@ -310,7 +318,7 @@ void add_new_funnels(const FUN_PTR_T& src,
         for (auto s_y : signs){
           x0(0) = s_x*x_s;
           x0(1) = s_y*y_s;
-          fun_parent1 = get_this_funnel_1(src, max_r, x0, vel_p);
+          fun_parent1 = get_this_funnel_1(src, max_r, x0, vel_p, true);
           if (fun_parent1 != nullptr) {
             // add
             fun_sys.add_funnel(fun_parent1, true);

@@ -43,8 +43,8 @@ using vector_t_ptr_t = fun_t::vector_t_ptr_t;
 
 using p_mat_t = lyap_t::s_mat_t;
 
-size_t *n_verif_obs;
-double_t *t_step;
+std::unique_ptr<size_t> n_verif_obs = std::make_unique<size_t>(200);
+std::unique_ptr<double_t> t_step = std::make_unique<double_t>(100);
 
 // Predefinitions
 dist_t my_dist;
@@ -68,7 +68,7 @@ p_mat_t get_P_targ(){
   return P_targ;
 }
 
-fun_ptr_t get_obstacle_box_fun(){
+fun_ptr_t get_obstacle_box_fun(bool is_cyclic=false){
   // Creates an obstacle that moves along a square box of side length 0.5
   // The obstacle is a sphere of radius 0.5 in x-y-plane
   
@@ -119,7 +119,8 @@ fun_ptr_t get_obstacle_box_fun(){
   
   // Set in funnel
   my_obs_fun->set_traj(t_ptr, u_ptr, x_ptr);
-  
+  // Set if cyclic
+  my_obs_fun->set_cyclic(is_cyclic);
   return my_obs_fun;
 }
 
@@ -196,15 +197,17 @@ int main(int arg, char *argv[]) {
   //                  to discrete verif time (int)
   if (arg>=3){
     *t_step = std::stod(argv[2]);
-  }else{
-    *t_step = 100;
   }
   // Third argument: n_verif_obs how many steps are used for obstacle evasion
   if (arg>=4){
     *n_verif_obs = std::stoi(argv[3]);
-  }else{
-    *n_verif_obs = 200;
   }
+  // Fourth argument : Whether or not the obstacle has a cyclic trajectory
+  bool obs_is_cyclic=true;
+  if(arg>=5){
+    obs_is_cyclic = (bool)std::stoi(argv[4]);
+  }
+  
   
   std::cout << "funnel sys" << std::endl;
   
@@ -239,11 +242,11 @@ int main(int arg, char *argv[]) {
       ctrl_clk, lcl_clk, fun_sys_proc, trans_abs::ONE_PER_BLOCK);
   
   // Create the obstacle automaton
-  aut_col::aut_col<fun_t> my_aut_col(get_obstacle_box_fun(), obs_clk);
+  aut_col::aut_col<fun_t> my_aut_col(get_obstacle_box_fun(obs_is_cyclic), obs_clk);
   
   // Create the survival automaton
   // longer then the cycle time of the obstacle
-  aut_surv::aut_surv my_timer("surv", glob_clk, 1.5*4*2., false);
+  aut_surv::aut_surv my_timer("surv", glob_clk, 1.5*4*n_repeat, false);
   
   // Create a flag-catch automaton
   auto flag_funnels = get_target_fun();
@@ -253,7 +256,7 @@ int main(int arg, char *argv[]) {
   // Create a process / automaton that represents a formula over the events
   // Here we want to visit all catch funnels in their given order exactly n-times
   aut_formula::aut_all_times_n my_formula("n_visit", my_flag_catcher._all_event,
-      my_flag_catcher._all_sync, 2);
+      my_flag_catcher._all_sync, n_repeat);
   
   // Get initial funnel/position
   my_fun_sys->add_funnel(get_init_fun(), false, true);
@@ -261,7 +264,8 @@ int main(int arg, char *argv[]) {
   // Test expanding a funnel
   add_new_funnels(my_fun_sys->all_funnels()[0], 0.01, *my_fun_sys);
   for (auto ff : my_fun_sys->all_funnels()){
-    std::cout << ff->loc().name() << " " << ff->t()(ff->size()-1) << std::endl;
+    std::cout << ff->loc().name() << " t_end: " << ff->t()(ff->size()-1)
+        << " is_cyc: " << ff->is_cyclic() << std::endl;
   }
   
   // Add it all together to obtain a TA

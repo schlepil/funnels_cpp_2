@@ -241,8 +241,8 @@ namespace funnels{
       }
       
       // Funnels
-      for (auto v : _all_funnels){
-        for (auto e : v->_edges){
+      for (const auto &v : _all_funnels){
+        for (const auto &e : v->_edges){
           temp_string += e.declare()+"\n";
         }
       }

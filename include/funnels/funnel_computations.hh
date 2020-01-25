@@ -152,8 +152,8 @@ size_t compute_intersecting_trans(FUNNEL &src, const FUNNEL &tgt,
 
 // More basic computations
 template <class FUNNEL>
-std::pair<bool, std::pair<double, double>> compute_outer_col_times_fixed_ellip(
-    const FUNNEL &sys, const FUNNEL &obs) {
+std::vector<std::pair<bool, std::pair<double, double>>> compute_outer_col_times_fixed_ellip(
+    const FUNNEL &sys, const FUNNEL &obs, const std::vector<size_t> & obs_idx) {
 
 
 // The source funnel might intersect with tgt funnel[zeta] between
@@ -165,6 +165,8 @@ std::pair<bool, std::pair<double, double>> compute_outer_col_times_fixed_ellip(
   using matrix_t = typename fun_t::matrix_t;
   using vector_t_t = typename fun_t::vector_t_t;
   
+  assert(obs_idx.end()<=obs.t().size());
+  
   const vector_t_t &t_sys = *sys.t_ptr();
   const vector_t_t &t_obs = *obs.t_ptr();
   const matrix_t &x_sys = *sys.x_ptr();
@@ -172,9 +174,9 @@ std::pair<bool, std::pair<double, double>> compute_outer_col_times_fixed_ellip(
   Eigen::Matrix<bool, Eigen::Dynamic, 1> is_intersecting;
   
   double t_alpha_obs=0., t_beta_obs=0.;
+  size_t lower_ind, upper_ind;
   bool collided=false;
   bool in_interval = false;
-  
 
 // Distance needs to be larger 1.+radius
 // to guarantee non-intersection
@@ -183,35 +185,53 @@ std::pair<bool, std::pair<double, double>> compute_outer_col_times_fixed_ellip(
   proj_min_dist *= proj_min_dist; // Avoid sqrt
 // Todo: shortcut considering the bounding box
 
-  // Scan for first intersecting point
-  for (size_t i = 0; i < t_obs.size(); i++) {
-    is_intersecting =
-        (obs.C() * (obs.dist().cp_Mv(x_sys, VectorXd(x_obs.col(i)))))
-            .colwise().squaredNorm().array() < proj_min_dist;
-    if(is_intersecting.any()){
-      // Found the first colliding time point
-      t_alpha_obs = t_obs(i);
-      collided = true;
-      break;
+  // Scan for first intersecting point between each obstacle index pair
+  std::vector<std::pair<bool, std::pair<double, double>>> res_vec;
+  
+  for (size_t k=0; k<obs_idx.size()-1;k++) {
+    t_alpha_obs=0., t_beta_obs=0.;
+    lower_ind = obs_idx[k];
+    upper_ind = obs_idx[k+1];
+    for (size_t i=lower_ind; i<upper_ind; i++) {
+      is_intersecting =
+          (obs.C() * (obs.dist().cp_Mv(x_sys, VectorXd(x_obs.col(i)))))
+              .colwise().squaredNorm().array() < proj_min_dist;
+      if (is_intersecting.any()) {
+        // Found the first colliding time point
+        t_alpha_obs = t_obs(i);
+        collided = true;
+        break;
+      }
+    }
+    if (!collided) {
+      // collision free
+      res_vec.push_back(std::pair(false, std::pair(0., 0.)));
+      continue;
+    }
+    // Scan for last intersecting point
+    for (size_t i = upper_ind-1; i >= lower_ind; i--) {
+      is_intersecting =
+          (obs.C() * (obs.dist().cp_Mv(x_sys, VectorXd(x_obs.col(i)))))
+              .colwise().squaredNorm().array() < proj_min_dist;
+      if (is_intersecting.any()) {
+        // Found the first colliding time point
+        t_beta_obs = t_obs(i);
+        res_vec.push_back(std::pair(true, std::pair(t_alpha_obs,t_beta_obs)));
+        break;
+      }
     }
   }
-  if (!collided){
-    // collision free
-    return std::pair(false, std::pair(0.,0.));
-  }
-  // Scan for last intersecting point
-  for (size_t i = t_obs.size()-1; i >= 0; i--) {
-    is_intersecting =
-        (obs.C() * (obs.dist().cp_Mv(x_sys, VectorXd(x_obs.col(i)))))
-            .colwise().squaredNorm().array() < proj_min_dist;
-    if(is_intersecting.any()){
-      // Found the first colliding time point
-      t_beta_obs = t_obs(i);
-      break;
-    }
-  }
-  return std::pair(true, std::pair(t_alpha_obs,t_beta_obs));
+  return res_vec;
 }
+
+template <class FUNNEL>
+std::vector<std::pair<bool, std::pair<double, double>>> compute_outer_col_times_fixed_ellip(
+    const FUNNEL &sys, const FUNNEL &obs) {
+  
+}
+
+
+
 /*!
  * Computes the minimal and maximal time the obstacle intersects with the system
  * @tparam FUNNEL

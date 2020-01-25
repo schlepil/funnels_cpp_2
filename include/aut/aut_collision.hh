@@ -34,6 +34,12 @@ namespace aut_col{
       // init_edge
       _init_edge.update().add_expr(obs_clk, "=", 0);
     }
+  
+    void clear_all(){
+      // Clear all in funnel
+      _obs_funnel->clear_loc();
+      _obs_funnel->clear_edges();
+    }
     
     /// Compute the collisions of all funnels in the sys with the obstacle
     /// \tparam FUN_SYS_PTR
@@ -49,6 +55,10 @@ namespace aut_col{
       
       std::vector<fun_ptr_t> tmp_vec;
       bool p_is_init, p_is_parent;
+      
+      // Compute internals fo the obstacle funnel
+      _obs_funnel->gen_invariant(t_step, _obs_clk);
+      _obs_funnel->gen_internal_trans(t_step, _obs_clk);
       
       // todo approximate the transitions
       // Check collis ion for all funnels
@@ -104,7 +114,12 @@ namespace aut_col{
     }
     
     std::string declare_edge(){
-      return _init_edge.declare() + "\n";
+      std::string tmp_string;
+      tmp_string += _init_edge.declare() + "\n";
+      for (const auto &e : _obs_funnel->_edges){
+        tmp_string += e.declare()+"\n";
+      }
+      return tmp_string;
     }
   
     template <class T>

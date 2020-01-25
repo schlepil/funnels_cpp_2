@@ -176,6 +176,12 @@ namespace lyapunov{
     const s_vec_t &max_corner(){
       return _box_corner;
     }
+    
+    bool check_cyclic(){
+      // The lyap zone does not change shape
+      // We only have to check if the trajectory is indeed cyclic
+      return traj_t::check_cyclic();
+    }
 // todo
 //    // Conservative intersect
 //    // If true, the zone may intersect with this

@@ -47,9 +47,9 @@ namespace collision {
       
       // Add the invariants
       l_a->loc().add_expr(c_o, "<", std::floor(t_a_b.first*t_step));
-      coll->loc().add_expr(c_o, "<", std::floor(t_a_b.first*t_step));
-      coll->loc().add_expr(c_o, ">", std::ceil(t_a_b.first*t_step));
-      g_b->loc().add_expr(c_o, ">", std::ceil(t_a_b.first*t_step));
+      coll->loc().add_expr(c_o, ">", std::floor(t_a_b.first*t_step));
+      coll->loc().add_expr(c_o, "<", std::ceil(t_a_b.second*t_step));
+      g_b->loc().add_expr(c_o, ">", std::ceil(t_a_b.second*t_step));
       
       // Cyc
       l_a->set_cyclic(sys->is_cyclic());
@@ -82,16 +82,31 @@ namespace collision {
       
       if ((_sys_idx == nullptr) && (_obs_idx == nullptr)) {
         auto col_struct = compute_outer_col_times(*sys, *obs);
+        // Optimization, variable decomposition
+        // todo include this better into the structure
+        // todo make more robust
+        if (col_struct.first && _abs == BASE &&
+            col_struct.second.first == obs->t()->template topLeftCorner<1,1>() &&
+            col_struct.second.second == obs->t()->template bottomLeftCorner<1,1>()){
+          // The at each time point for the ctrl clock there exists a obstacle
+          // clock value that causes collision
+          // Cut the obstacle into 4 (?!?)
+          _abs = MED;
+          _obs_idx = new std::vector<size_t>(5);
+          for (size_t k=0; k<5; k++) {
+            (*_obs_idx)[k] = (size_t) (obs->t().size()*k/4);
+          }
+        }
         if(col_struct.first){
+          new_sys.clear();
           switch(_abs){
             case BASE:
-              new_sys.clear();
               base_abs(sys, obs, new_sys, col_struct.second, t_step, c_o,
                   col_lbl);
               return !new_sys.empty();
             case MED:
-              throw std::runtime_error("to be done"); //todo
-              break;
+              med_abs(sys, obs, new_sys, t_step, c_o, col_lbl);
+              return !new_sys.empty();
           }
         }
       } else {
