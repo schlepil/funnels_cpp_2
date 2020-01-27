@@ -141,7 +141,7 @@ namespace aut_catch_flag{
         for (size_t k=0; k<_flag_fun.size(); k++){
           switch (_cond){
             case INCLUSION:
-              n_delta_trans += compute_inclusion_trans_2(*fun, *(_flag_fun[k]),
+              n_delta_trans += compute_inclusion_trans(*fun, *(_flag_fun[k]),
                   t_step, fun_sys_ptr->ctrl_clk(), *_clk_catch,
                   fun->loc(), fun->loc(), *_all_event[k]);
               break;

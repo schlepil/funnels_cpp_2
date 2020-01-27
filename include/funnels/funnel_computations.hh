@@ -32,64 +32,64 @@ size_t compute_converging_trans(FUNNEL &src, const FUNNEL& tgt,
 }
 
 ///////////////
+//
+//template <class FUNNEL>
+//size_t compute_inclusion_trans_fixed_ellip(
+//    FUNNEL &src, const FUNNEL &tgt, double t_step,
+//    switching_trans_info_t & info) {
+//
+//  // note : no need for a second clock, switching only allowed within the
+//  // same funnel system -> same ctrl_clk
+//  // Fill;
+//  switching_trans_info_raw_t info_raw =
+//      compute_covered_times_fixed_ellip(src, tgt);
+//  info.set_values(info_raw);
+//
+//  return src._trans_abs->operator()(src._edges, t_step, info); // Done
+//}
+//
+//template<class FUNNEL>
+//size_t compute_inclusion_trans(FUNNEL &src, const FUNNEL& tgt,
+//     double t_step, switching_trans_info_t &info){
+//
+//  using cvx_hull_t = typename FUNNEL::cvx_hull_t;
+//  using lyap_t = typename cvx_hull_t::lyap_t;
+//  using dist_t = typename lyap_t ::dist_t;
+//  using traj_t = typename lyap_t ::traj_t;
+//
+//  if (std::is_same<lyap_t, lyapunov::fixed_ellipsoidal_lyap_t<traj_t, dist_t>>::value){
+//    // Check if the inner bounding box of the src intersect with the
+//    // outer bounding box of the target
+//    if (src.cvx_hull().intersect_in_out(tgt.cvx_hull())) {
+//      return compute_inclusion_trans_fixed_ellip(src, tgt, t_step, info);
+//    }
+//  }else{
+//    throw std::runtime_error("Converging not implemented");
+//  }
+//  return 0; // CVX_HULLS did not meet criterion
+//}
 
-template <class FUNNEL>
-size_t compute_inclusion_trans_fixed_ellip(
-    FUNNEL &src, const FUNNEL &tgt, double t_step,
-    switching_trans_info_t & info) {
-  
-  // note : no need for a second clock, switching only allowed within the
-  // same funnel system -> same ctrl_clk
-  // Fill;
-  switching_trans_info_raw_t info_raw =
-      compute_covered_times_fixed_ellip(src, tgt);
-  info.set_values(info_raw);
-  
-  return src._trans_abs->operator()(src._edges, t_step, info); // Done
-}
-
-template<class FUNNEL>
-size_t compute_inclusion_trans(FUNNEL &src, const FUNNEL& tgt,
-     double t_step, switching_trans_info_t &info){
-  
-  using cvx_hull_t = typename FUNNEL::cvx_hull_t;
-  using lyap_t = typename cvx_hull_t::lyap_t;
-  using dist_t = typename lyap_t ::dist_t;
-  using traj_t = typename lyap_t ::traj_t;
-  
-  if (std::is_same<lyap_t, lyapunov::fixed_ellipsoidal_lyap_t<traj_t, dist_t>>::value){
-    // Check if the inner bounding box of the src intersect with the
-    // outer bounding box of the target
-    if (src.cvx_hull().intersect_in_out(tgt.cvx_hull())) {
-      return compute_inclusion_trans_fixed_ellip(src, tgt, t_step, info);
-    }
-  }else{
-    throw std::runtime_error("Converging not implemented");
-  }
-  return 0; // CVX_HULLS did not meet criterion
-}
-
-template<class FUNNEL>
-size_t compute_inclusion_trans_1(FUNNEL &src, const FUNNEL& tgt,
-    double t_step, const clock_ta_t &ctrl_clk, const clock_ta_t &lcl_clk){
-  
-  switching_trans_info_t info(src.loc(), tgt.loc(),
-      ctrl_clk, lcl_clk, utils_ext::event_map["no_action"]);
-  
-  return compute_inclusion_trans(src, tgt, t_step, info);
-}
-
-template<class FUNNEL>
-size_t compute_inclusion_trans_2(FUNNEL &src, const FUNNEL& tgt,
-    double t_step, const clock_ta_t &ctrl_clk, const clock_ta_t &lcl_clk,
-    const location_t &src_loc, const location_t &tgt_loc,
-    const event_t &evt){
-
-  switching_trans_info_t info(src_loc, tgt_loc,
-      ctrl_clk, lcl_clk, evt);
-  
-  return compute_inclusion_trans(src, tgt, t_step, info);
-}
+//template<class FUNNEL>
+//size_t compute_inclusion_trans_1(FUNNEL &src, const FUNNEL& tgt,
+//    double t_step, const clock_ta_t &ctrl_clk, const clock_ta_t &lcl_clk){
+//
+//  switching_trans_info_t info(src.loc(), tgt.loc(),
+//      ctrl_clk, lcl_clk, utils_ext::event_map["no_action"]);
+//
+//  return compute_inclusion_trans(src, tgt, t_step, info);
+//}
+//
+//template<class FUNNEL>
+//size_t compute_inclusion_trans_2(FUNNEL &src, const FUNNEL& tgt,
+//    double t_step, const clock_ta_t &ctrl_clk, const clock_ta_t &lcl_clk,
+//    const location_t &src_loc, const location_t &tgt_loc,
+//    const event_t &evt){
+//
+//  switching_trans_info_t info(src_loc, tgt_loc,
+//      ctrl_clk, lcl_clk, evt);
+//
+//  return compute_inclusion_trans(src, tgt, t_step, info);
+//}
 
 /////////////////////////////////////////////////////
 // intersection

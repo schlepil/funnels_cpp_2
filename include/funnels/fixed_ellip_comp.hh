@@ -7,12 +7,22 @@
 
 #include <iostream>
 
+#include "funnels/lyapunov.hh"
+
 #include "funnels/comp_utils.hh"
 #include "funnels/trans_types_def.hh"
 
-template<class FUNNEL, class CLOCK>
-size_t compute_converging_trans_fixed_ellip(
-    FUNNEL &src, const FUNNEL &tgt, double t_step,
+//template<class FUNNEL, class CLOCK>
+//compute_converging_trans_fixed_ellip(
+template<template<class> class FUNNEL, template<class> class CVX_HULL,
+template<class,class> class LYAP, class TRAJ, class DIST, class CLOCK>
+typename std::enable_if<
+    std::is_same<FUNNEL<CVX_HULL<LYAP<TRAJ,DIST>>>,
+    FUNNEL<CVX_HULL<lyapunov::fixed_ellipsoidal_lyap_t<TRAJ,DIST>>> >::value,
+    size_t>::type
+compute_converging_trans(
+    FUNNEL<CVX_HULL<LYAP<TRAJ,DIST>>> &src,
+    const FUNNEL<CVX_HULL<LYAP<TRAJ,DIST>>> &tgt, double t_step,
     const CLOCK &lcl_clk){
   
   assert((src.gamma()>=0.) && (tgt.gamma()>=0.) && "Fixed size funnels "
@@ -39,9 +49,7 @@ size_t compute_converging_trans_fixed_ellip(
   return 1;
 }
 
-
 /////////////////////////
-
 template <class FUNNEL>
 switching_trans_info_raw_t
 compute_covered_times_fixed_ellip(FUNNEL &src, const FUNNEL &tgt){
@@ -62,7 +70,7 @@ compute_covered_times_fixed_ellip(FUNNEL &src, const FUNNEL &tgt){
   size_t n_alpha, n_beta, n_zeta;
   bool in_interval_src=false;
   bool is_assigned;
-  
+
 //  Eigen::MatrixXd _tt;
   
   switching_trans_info_raw_t all_trans_raw;
@@ -151,9 +159,73 @@ compute_covered_times_fixed_ellip(FUNNEL &src, const FUNNEL &tgt){
   }
 
 #endif
-
+  
   return all_trans_raw;
 }
+
+template<template<class> class FUNNEL, template<class> class CVX_HULL,
+    template<class,class> class LYAP, class TRAJ, class DIST>
+typename std::enable_if<
+    std::is_same<FUNNEL<CVX_HULL<LYAP<TRAJ,DIST>>>,
+        FUNNEL<CVX_HULL<lyapunov::fixed_ellipsoidal_lyap_t<TRAJ,DIST>>> >::value,
+    size_t>::type
+compute_inclusion_trans(FUNNEL<CVX_HULL<LYAP<TRAJ,DIST>>> &src,
+    const FUNNEL<CVX_HULL<LYAP<TRAJ,DIST>>>& tgt,
+    double t_step, switching_trans_info_t &info) {
+  
+  // Check if the inner bounding box of the src intersect with the
+  // outer bounding box of the target
+    if (!src.cvx_hull().intersect_in_out(tgt.cvx_hull())) {
+      return 0;
+    }
+  
+  // note : no need for a second clock, switching only allowed within the
+  // same funnel system -> same ctrl_clk
+  // Fill;
+  switching_trans_info_raw_t info_raw =
+      compute_covered_times_fixed_ellip(src, tgt);
+  info.set_values(info_raw);
+  
+  return src._trans_abs->operator()(src._edges, t_step, info); // Done
+}
+
+template<template<class> class FUNNEL, template<class> class CVX_HULL,
+    template<class,class> class LYAP, class TRAJ, class DIST>
+typename std::enable_if<
+    std::is_same<FUNNEL<CVX_HULL<LYAP<TRAJ,DIST>>>,
+        FUNNEL<CVX_HULL<lyapunov::fixed_ellipsoidal_lyap_t<TRAJ,DIST>>> >::value,
+    size_t>::type
+compute_inclusion_trans(FUNNEL<CVX_HULL<LYAP<TRAJ,DIST>>> &src,
+    const FUNNEL<CVX_HULL<LYAP<TRAJ,DIST>>>& tgt,
+    double t_step, const clock_ta_t &ctrl_clk, const clock_ta_t &lcl_clk){
+  
+  switching_trans_info_t info(src.loc(), tgt.loc(),
+                              ctrl_clk, lcl_clk, utils_ext::event_map["no_action"]);
+  
+  return compute_inclusion_trans(src, tgt, t_step, info);
+}
+
+template<template<class> class FUNNEL, template<class> class CVX_HULL,
+    template<class,class> class LYAP, class TRAJ, class DIST>
+typename std::enable_if<
+    std::is_same<FUNNEL<CVX_HULL<LYAP<TRAJ,DIST>>>,
+        FUNNEL<CVX_HULL<lyapunov::fixed_ellipsoidal_lyap_t<TRAJ,DIST>>> >::value,
+    size_t>::type
+compute_inclusion_trans_2(FUNNEL<CVX_HULL<LYAP<TRAJ,DIST>>> &src,
+    const FUNNEL<CVX_HULL<LYAP<TRAJ,DIST>>>& tgt,
+    double t_step, const clock_ta_t &ctrl_clk, const clock_ta_t &lcl_clk,
+    const location_t &src_loc, const location_t &tgt_loc,
+    const event_t &evt){
+  
+  switching_trans_info_t info(src_loc, tgt_loc,
+                              ctrl_clk, lcl_clk, evt);
+  
+  return compute_inclusion_trans(src, tgt, t_step, info);
+}
+
+
+/////////////////////////
+
 
 ////////////////////
 

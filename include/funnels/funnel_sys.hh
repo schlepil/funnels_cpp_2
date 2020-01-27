@@ -187,7 +187,7 @@ namespace funnels{
                   {std::pair(src_fun->loc().id(), tgt_fun->loc().id()),
                    std::make_shared<trans_abs::switching_trans_abstract_t>(_abst_lvl)}).first->second;
           
-          n_trans_delta_d = compute_inclusion_trans_1(*src_fun, *tgt_fun,
+          n_trans_delta_d = compute_inclusion_trans(*src_fun, *tgt_fun,
                                                     t_step, _ctrl_clk, _lcl_clk);
           n_trans_delta += n_trans_delta_d;
           if (n_trans_delta_d>0) {
