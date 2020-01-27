@@ -76,7 +76,7 @@ namespace trajectories{
       _x = std::make_shared<matrix_t>(dimx, n);
       _t = std::make_shared<vector_t_t>(n);
     }
-    size_t size(){
+    size_t size() const {
       return _n;
     }
     

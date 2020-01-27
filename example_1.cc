@@ -80,8 +80,13 @@ fun_ptr_t get_obstacle_box_fun(bool is_cyclic=false){
   const process_t &my_proc_obs = utils_ext::process_map.create_and_get
       ("obs_col");
   // Create the funnel
+  // Size to cover almost all points in playfield
+//  fun_ptr_t my_obs_fun = make_shared<fun_t>(4 * (*n_verif_obs), "obs_fun", my_proc_obs,
+//                                            4.*get_P_obs(), gamma_obs, my_dist);
+  
+  //Small for testing
   fun_ptr_t my_obs_fun = make_shared<fun_t>(4 * (*n_verif_obs), "obs_fun", my_proc_obs,
-                                            4.*get_P_obs(), gamma_obs, my_dist);
+                                            100.*get_P_obs(), gamma_obs, my_dist);
   //Fill it
   vector_t_ptr_t t_ptr = std::make_shared<vector_t_t>(4 * (*n_verif_obs));
   vector_u_ptr_t u_ptr = std::make_shared<vector_u_t>(my_obs_fun->dimu);

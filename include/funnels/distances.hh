@@ -50,25 +50,30 @@ public:
 //    return _tmpMat;
 //  }
   
-  const MatrixXd & cp_vv(const VectorXd & v0, const VectorXd & v1) const {
+  template<class DERIVED1, class DERIVED2>
+  const MatrixXd & cp_vv(const MatrixBase<DERIVED1> &v0, const MatrixBase<DERIVED2> &v1) const {
+    assert(v0.cols()==1 && v1.cols());
     _tmpMat = v0-v1;
     do_so2_wrap();
     return _tmpMat;
   }
   
-  const MatrixXd & cp_vM(const VectorXd & v0, const MatrixXd & m1) const {
+  template<class DERIVEDV, class DERIVEDM>
+  const MatrixXd & cp_vM(const MatrixBase<DERIVEDV> &v0, const MatrixBase<DERIVEDM> &m1) const {
     _tmpMat = (-m1).colwise() + v0;
     do_so2_wrap();
     return _tmpMat;
   }
   
-  const MatrixXd & cp_Mv(const MatrixXd & m0, const VectorXd & v1) const {
+  template<class DERIVEDM, class DERIVEDV>
+  const MatrixXd & cp_Mv(const MatrixBase<DERIVEDM> &m0, const MatrixBase<DERIVEDV> &v1) const {
     _tmpMat = m0.colwise() - v1;
     do_so2_wrap();
     return _tmpMat;
   }
   
-  const MatrixXd &cp_MM(const MatrixXd & m0, const MatrixXd & m1) const {
+  template<class DERIVED1, class DERIVED2>
+  const MatrixXd &cp_MM(const MatrixBase<DERIVED1> &m0, const MatrixBase<DERIVED2> &m1) const {
     _tmpMat = m0 - m1;
     do_so2_wrap();
     return _tmpMat;

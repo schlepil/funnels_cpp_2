@@ -153,7 +153,7 @@ size_t compute_intersecting_trans(FUNNEL &src, const FUNNEL &tgt,
 // More basic computations
 template <class FUNNEL>
 std::vector<std::pair<bool, std::pair<double, double>>> compute_outer_col_times_fixed_ellip(
-    const FUNNEL &sys, const FUNNEL &obs, const std::vector<size_t> & obs_idx) {
+    const FUNNEL &sys, const FUNNEL &obs, const std::vector<size_t> &obs_idx) {
 
 
 // The source funnel might intersect with tgt funnel[zeta] between
@@ -165,7 +165,7 @@ std::vector<std::pair<bool, std::pair<double, double>>> compute_outer_col_times_
   using matrix_t = typename fun_t::matrix_t;
   using vector_t_t = typename fun_t::vector_t_t;
   
-  assert(obs_idx.end()<=obs.t().size());
+  assert(obs_idx.back()<=obs.size());
   
   const vector_t_t &t_sys = *sys.t_ptr();
   const vector_t_t &t_obs = *obs.t_ptr();
@@ -177,28 +177,38 @@ std::vector<std::pair<bool, std::pair<double, double>>> compute_outer_col_times_
   size_t lower_ind, upper_ind;
   bool collided=false;
   bool in_interval = false;
+  bool continuation_forward, continuation_backward;
 
 // Distance needs to be larger 1.+radius
 // to guarantee non-intersection
 // todo check if ok if obstacle has "infinite" velocity size
-  double proj_min_dist = 1. + lyapunov::projected_max_radius(obs.C(), sys.C());
+  double proj_min_dist = 1.+lyapunov::projected_max_radius(obs.C(), sys.C());
   proj_min_dist *= proj_min_dist; // Avoid sqrt
 // Todo: shortcut considering the bounding box
 
   // Scan for first intersecting point between each obstacle index pair
   std::vector<std::pair<bool, std::pair<double, double>>> res_vec;
   
+  continuation_forward = false;
+  continuation_backward = false;
   for (size_t k=0; k<obs_idx.size()-1;k++) {
     t_alpha_obs=0., t_beta_obs=0.;
     lower_ind = obs_idx[k];
     upper_ind = obs_idx[k+1];
+    
     for (size_t i=lower_ind; i<upper_ind; i++) {
       is_intersecting =
-          (obs.C() * (obs.dist().cp_Mv(x_sys, VectorXd(x_obs.col(i)))))
+          (obs.C() * (obs.dist().cp_Mv(x_sys, x_obs.col(i))))
               .colwise().squaredNorm().array() < proj_min_dist;
       if (is_intersecting.any()) {
         // Found the first colliding time point
+        // Set the new only if it is not a continuation
         t_alpha_obs = t_obs(i);
+        if (i==lower_ind){
+          continuation_backward = true;
+        }else{
+          continuation_backward = false;
+        }
         collided = true;
         break;
       }
@@ -211,12 +221,24 @@ std::vector<std::pair<bool, std::pair<double, double>>> compute_outer_col_times_
     // Scan for last intersecting point
     for (size_t i = upper_ind-1; i >= lower_ind; i--) {
       is_intersecting =
-          (obs.C() * (obs.dist().cp_Mv(x_sys, VectorXd(x_obs.col(i)))))
+          (obs.C() * (obs.dist().cp_Mv(x_sys, x_obs.col(i))))
               .colwise().squaredNorm().array() < proj_min_dist;
       if (is_intersecting.any()) {
         // Found the first colliding time point
         t_beta_obs = t_obs(i);
-        res_vec.push_back(std::pair(true, std::pair(t_alpha_obs,t_beta_obs)));
+        if (continuation_forward && continuation_backward){
+          assert(!res_vec.empty());
+          // Update end
+          res_vec.back().second.second = t_beta_obs;
+        }else{
+          // New interval
+          res_vec.push_back(std::pair(true, std::pair(t_alpha_obs,t_beta_obs)));
+        }
+        if (i == upper_ind-1){
+          continuation_forward = true;
+        }else{
+          continuation_forward = false;
+        }
         break;
       }
     }
@@ -225,9 +247,9 @@ std::vector<std::pair<bool, std::pair<double, double>>> compute_outer_col_times_
 }
 
 template <class FUNNEL>
-std::vector<std::pair<bool, std::pair<double, double>>> compute_outer_col_times_fixed_ellip(
+std::pair<bool, std::pair<double, double>> compute_outer_col_times_fixed_ellip(
     const FUNNEL &sys, const FUNNEL &obs) {
-  
+  return compute_outer_col_times_fixed_ellip(sys, obs, {0,obs.size()})[0];
 }
 
 
@@ -256,6 +278,33 @@ std::pair<bool, std::pair<double, double>> compute_outer_col_times(
     throw std::runtime_error("Converging not implemented");
   }
   return {false, {0.,0.}}; // CVX_HULLS did not meet criterion
+}
+
+/*!
+ * Computes the minimal and maximal time the obstacle intersects with the system
+ * foreach index range between [idx_vec_i, idx_vec_{i+1}[
+ * @tparam FUNNEL
+ * @param src
+ * @param tgt
+ * @return
+ */
+template <class FUNNEL>
+std::vector<std::pair<bool, std::pair<double, double>>> compute_outer_col_times(
+    const FUNNEL &sys, const FUNNEL &obs, const std::vector<size_t> obs_idx){
+  using lyap_t = typename FUNNEL::lyap_t;
+  using traj_t = typename lyap_t::traj_t;
+  using dist_t = typename lyap_t::dist_t;
+  
+  if (std::is_same<lyap_t, lyapunov::fixed_ellipsoidal_lyap_t<traj_t, dist_t>>::value){
+    // If bounding outer bounding boxes do not intersect ->
+    // No collision possible
+    if (sys.cvx_hull().intersect_out_out(obs.cvx_hull())) {
+      return compute_outer_col_times_fixed_ellip(sys, obs, obs_idx);
+    }
+  }else{
+    throw std::runtime_error("Converging not implemented");
+  }
+  return {{false, {0.,0.}}}; // CVX_HULLS did not meet criterion
 }
 
 
