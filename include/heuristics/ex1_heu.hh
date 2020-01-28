@@ -21,18 +21,18 @@
 // signal
 // Attention, assumes constant velocity/input
 
-const double max_r_step = 0.1; // different funnel sizes in a family
+const double max_r_step = 0.25; // different funnel sizes in a family
 const double min_r = 0.001; // Minimal radius
-const double max_r = 0.5; // Minimal radius
+const double max_r = 0.501; // Maximal radius
 const double max_alpha_step = max_r_step*max_r_step; // Minimal step for alpha
 const double min_alpha = min_r*min_r; // Minimal alpha for ellipsoids
 const double max_alpha = max_r*max_r; // Minimal alpha for ellipsoids
 const double max_vel = 1.; // Norm of velocity
 const double min_vel_diff = 0.1; // Norm difference in velocity
 const double min_ang_diff = 20.*M_PI/180.;
-const double gamma_conv = 3.; // exponential convergence rate
+const double gamma_conv = 9.; // exponential convergence rate
 const double max_traj_length = 0.2; // Length of the new segment
-const double dt_step = 0.05; //time step between two verification points
+const double dt_step = 0.025; //time step between two verification points
 const double max_time = 10.;
 const double min_englobe_fac = 1.1;
 
@@ -269,5 +269,8 @@ void add_new_funnels(const FUN_PTR_T& src,
   // All calculated
   return;
 }
+
+//template<class FUN_SYS, class GRAPH>
+//void iteration_from_graph( FUN_SYS)
 
 #endif //FUNNELS_CPP_EX1_HEU_HH

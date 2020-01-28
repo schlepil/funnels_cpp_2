@@ -11,6 +11,7 @@
 #include <unordered_map>
 
 #include "funnels/utils.hh"
+#include "funnels/funnels.hh"
 
 namespace funnels{
   
@@ -34,13 +35,6 @@ namespace funnels{
       _init_dummy(utils_ext::loc_map.create_and_get(proc.name()
           +"_init_dummy", proc, funnels::location_type_t::COMMITTED)){
       _init_dummy.set_initial(true);
-    }
-    
-    const process_t & process(){
-      if(_all_funnels.empty()){
-        throw std::runtime_error("Empty funnel sys has no process");
-      }
-      return _all_funnels[0]->loc().process();
     }
     
     void add_funnel(fun_ptr_t &funnel,
@@ -165,7 +159,7 @@ namespace funnels{
       std::cout << "Gen switching transitions" << std::endl;
       // todo parallelize
       for (auto src_fun : _all_funnels){
-        std::cout << "funnel " << src_fun->loc().name()  << " (" << i << "/" <<
+        std::cout << "funnel " << src_fun->loc().name()  << " (" << ++i << "/" <<
                   _all_funnels.size() << ")";
         n_trans_delta = 0;
         if (src_fun->_is_colliding){
@@ -196,7 +190,6 @@ namespace funnels{
         }
         n_trans += n_trans_delta;
         std::cout << std::endl << " has " << n_trans_delta << " outgoing" << std::endl;
-        i++;
       }
       std::cout << "A total of " << n_trans << "transitions" << std::endl;
     }
@@ -283,6 +276,10 @@ namespace funnels{
         a_f->clear_loc();
         a_f->clear_edges();
       }
+    }
+    
+    const process_t & process(){
+      return _init_dummy.process();
     }
   
   public:

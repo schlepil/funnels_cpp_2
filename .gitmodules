@@ -1,3 +1,6 @@
 [submodule "eigen"]
 	path = eigen
 	url = https://gitlab.com/libeigen/eigen.git
+[submodule "tchecker_ext"]
+	path = tchecker_ext
+	url = git@github.com:schlepil/tchecker_ext.git

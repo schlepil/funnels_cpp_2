@@ -17,9 +17,7 @@
 using namespace std;
 using namespace Eigen;
 
-double wrap_so2(double x){
-  return std::fmod(x, M_PI);
-}
+double wrap_so2(double x);
 
 class partial_so2_dist_t{
 public:

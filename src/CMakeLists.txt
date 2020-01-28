@@ -19,6 +19,7 @@ set(FUNNEL_FILES
         "${FUNNEL_INC_DIR}/funnels/funnel_computations.hh"
         "${FUNNEL_INC_DIR}/funnels/distances.hh"
         "${FUNNEL_INC_DIR}/funnels/collisions.hh"
+        "${CMAKE_CURRENT_SOURCE_DIR}/distances.cc"
         PARENT_SCOPE)
 
 set(TA_FILES
@@ -42,11 +43,15 @@ set(HELPER_FILES
         PARENT_SCOPE)
 
 set(EX1_ADD_FILES_HEU
+        "${CMAKE_CURRENT_SOURCE_DIR}/example_1_utils.cc"
+        "${FUNNEL_INC_DIR}/examples/example_1_utils.hh"
         "${CMAKE_CURRENT_SOURCE_DIR}/ex1_heu.cc"
         "${FUNNEL_INC_DIR}/heuristics/ex1_heu.hh"
         PARENT_SCOPE)
 
 set(EX1_ADD_FILES_FIX
+        "${CMAKE_CURRENT_SOURCE_DIR}/example_1_utils.cc"
+        "${FUNNEL_INC_DIR}/examples/example_1_utils.hh"
         "${CMAKE_CURRENT_SOURCE_DIR}/ex1_fixed.cc"
         "${FUNNEL_INC_DIR}/heuristics/ex1_fixed.hh"
         PARENT_SCOPE)

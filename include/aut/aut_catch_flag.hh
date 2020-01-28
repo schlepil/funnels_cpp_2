@@ -107,6 +107,13 @@ namespace aut_catch_flag{
       }
       // Done
     }
+    
+    void sync_process(const process_t &process){
+      // Add the given process to the sync for all events
+      for (size_t k=0; k<_all_sync.size(); k++){
+        _all_sync[k]->add_sync(process, *_all_event[k]);
+      }
+    }
   
     /// Compute the collisions of all funnels in the sys with the obstacle
     /// \tparam FUN_SYS_PTR
@@ -114,12 +121,7 @@ namespace aut_catch_flag{
     template <class FUN_SYS_PTR>
     void compute_catches(const FUN_SYS_PTR & fun_sys_ptr, double t_step){
     
-      // Add to the sync, make transition from and to the same funnel if
-      // colliding
-      
-      for (size_t k=0; k<_all_sync.size(); k++){
-        _all_sync[k]->add_sync(fun_sys_ptr->process(), *_all_event[k]);
-      }
+      // make transition from and to the same funnel if colliding
       
       // todo approximate the transitions
       // Check catch condition for each funnel

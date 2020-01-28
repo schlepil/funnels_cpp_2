@@ -16,6 +16,11 @@ using blck_idx_t = std::vector<std::pair<size_t , size_t>>;
 
 using d_vec_t = std::vector<double>;
 
+using col_struct_t = std::pair<bool, std::pair<double, double>>;
+using col_struct_vec_t = std::vector<col_struct_t>;
+
+using idx_vec_t = std::vector<size_t>;
+
 struct trans_info_raw_t{
 public:
   
