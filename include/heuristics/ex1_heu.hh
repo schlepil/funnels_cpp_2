@@ -270,7 +270,27 @@ void add_new_funnels(const FUN_PTR_T& src,
   return;
 }
 
-//template<class FUN_SYS, class GRAPH>
-//void iteration_from_graph( FUN_SYS)
+//template<class NODE_PTR_T>
+//double max_reach_time(const node_ptr_t & node_ptr, size_t dim){
+//
+//  node_ptr->
+//}
+
+template<class FUN_SYS, class GRAPH, class SYSDECL>
+void iteration_from_graph(FUN_SYS &fun_sys, const GRAPH &graph,
+    const SYSDECL &sysdecl){
+  // Expecting a graph that allows to inspect all nodes
+  using node_ptr_t = typename GRAPH::node_ptr_t;
+  
+  
+  std::vector<node_ptr_t> all_nodes = graph.get_all_nodes();
+  node_ptr_t aa = all_nodes[0];
+  for (const node_ptr_t & a_node : all_nodes){
+  
+  }
+  
+  
+  
+}
 
 #endif //FUNNELS_CPP_EX1_HEU_HH

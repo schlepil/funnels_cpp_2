@@ -268,8 +268,11 @@ int main(int arg, char *argv[]){
       ts_vec.clear(); builder_alloc_vec.clear();
       throw;
     }
-  
-    graph_ptr->edge_check_time();
+    
+    if (*outcome_ptr != tchecker::covreach::REACHABLE){
+      //Do the refinement
+      iteration_from_graph(my_fun_sys, *graph_ptr, *sysdecl);
+    }
   
     std::cout << "REACHABLE " << (*outcome_ptr == tchecker::covreach::REACHABLE ? "true" : "false") << std::endl;
   
